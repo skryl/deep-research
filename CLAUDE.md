@@ -9,16 +9,11 @@ A Hugo-based site for deep dives on various topics, deployed to GitHub Pages.
   <yymmdd>-<topic>/
     README.md              # Overview and key findings (required)
     *.md                   # Sub-topic pages
-hugo.toml                  # Hugo config (Paper theme)
-layouts/
-  _default/single.html     # Hugo 0.157+ compat fix (site.Author → site.Params.author)
-  partials/head.html        # Same compat fix for head partial
-  research/baseof.html      # Docs layout with sidebar (wider than default)
-  research/list.html        # Section/topic overview template
-  research/single.html      # Individual doc page template
-  partials/docs-sidebar.html # Sidebar navigation partial
-themes/paper/              # Git submodule (nanxiaobei/hugo-paper)
+hugo.toml                  # Hugo config (Book theme)
+themes/hugo-book/          # Git submodule (alex-shpak/hugo-book)
 scripts/build-content.sh   # Generates Hugo content/ from research files
+tests/sidebar.spec.js      # Playwright rendering tests
+playwright.config.js       # Playwright config (desktop + mobile viewports)
 .github/workflows/deploy.yml
 ```
 
@@ -49,16 +44,16 @@ scripts/build-content.sh   # Generates Hugo content/ from research files
 ## Content Build Pipeline
 
 Research files in `<year>/` are plain markdown with no Hugo front matter. The script
-`scripts/build-content.sh` generates Hugo `content/` with proper TOML front matter:
+`scripts/build-content.sh` generates Hugo `content/` with YAML front matter:
 
 - `content/_index.md` — homepage
-- `content/research/_index.md` — research section index
+- `content/research/_index.md` — research section index (bookFlatSection)
 - `content/research/<topic>/_index.md` — topic overview (from README.md)
 - `content/research/<topic>/<page>.md` — sub-topic pages
 
-All research content uses `type = "research"` which activates the docs layout
-with a sticky sidebar showing the document index. Pages are nested under their
-topic directory in the sidebar and highlighted when active.
+The Book theme renders `content/research/` as a sidebar navigation tree
+(`BookSection = "research"`). Topic sections use `bookCollapseSection: false`
+to stay expanded. Pages are ordered by `weight` in front matter.
 
 The `content/` directory is gitignored — always generated at build time.
 
@@ -71,7 +66,7 @@ bash scripts/build-content.sh && hugo --minify
 ```
 
 This must pass cleanly (exit 0, no errors) before pushing. It mirrors exactly
-what the GitHub Actions workflow runs. Hugo extended v0.157+ is required.
+what the GitHub Actions workflow runs. Hugo extended v0.146+ is required.
 
 Install Hugo if needed:
 ```bash
@@ -86,16 +81,21 @@ npm run test:desktop      # Desktop viewport only
 npm run test:mobile       # Mobile viewport only
 ```
 
-Tests verify sidebar layout, active page highlighting, responsive behavior,
-and content rendering. Screenshots are saved to `test-results/` for visual review.
+Tests verify sidebar layout, mobile toggle, table of contents, responsive
+behavior, and content rendering. Screenshots are saved to `test-results/`.
 
 Requires Chromium — set `CHROMIUM_PATH` env var if not at the default location.
 
 ## Hugo Theme
 
-Uses Paper theme (git submodule at `themes/paper`). Layout overrides in `layouts/`:
-- `_default/single.html` and `partials/head.html` — fix Hugo 0.157 deprecation of `site.Author`
-- `research/` — docs-style layout with sidebar navigation (wider max-width, sticky sidebar, active page highlighting, responsive collapse on mobile)
+Uses Hugo Book theme (git submodule at `themes/hugo-book`). No custom layout
+overrides — uses the theme's built-in features:
+
+- Left sidebar with collapsible navigation tree
+- Right sidebar with table of contents (BookToC)
+- Mobile: hamburger toggle for sidebar, separate toggle for TOC
+- Search (BookSearch)
+- Dark/light/auto theme (BookTheme)
 
 ## Deployment
 
