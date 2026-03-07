@@ -5,6 +5,9 @@ paginate = 10
 
 theme = "paper"
 
+[author]
+  name = "skryl"
+
 [params]
   color = "linen"
   name = "Deep Research"
