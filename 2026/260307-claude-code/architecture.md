@@ -5,56 +5,134 @@
 Claude Code operates on an **agentic loop** — a cycle of reasoning, tool use, and observation:
 
 1. **User prompt** — The user provides a task or question.
-2. **Model reasoning** — Claude analyzes the prompt and decides what action to take.
-3. **Tool invocation** — Claude calls one or more tools (read file, edit file, run bash, search, etc.).
-4. **Observation** — Tool results are fed back into the model's context.
-5. **Iteration** — Steps 2–4 repeat until the task is complete.
+2. **Gather context** — Claude searches files, reads code, and builds understanding.
+3. **Take action** — Claude edits files, runs commands, calls external tools.
+4. **Verify results** — Claude runs tests, checks output, compares to expectations.
+5. **Iterate** — Steps 2–4 repeat, course-correcting based on failures, until the task is complete.
 6. **Response** — Claude presents the final result to the user.
 
-This loop allows Claude to handle complex, multi-step tasks that require exploration, trial-and-error, and incremental progress — much like a human developer would work.
+The user is part of this loop — you can interrupt at any point to steer, provide context, or try a different approach. Press `Esc` to interrupt a running action.
 
 ## Tool System
 
-Claude Code exposes a set of built-in tools that the model can invoke:
+Tools make Claude Code agentic. Without them, Claude could only respond with text. Five categories:
+
+### File Operations
 
 | Tool | Purpose |
 |------|---------|
-| `Read` | Read file contents (supports code, images, PDFs, notebooks) |
+| `Read` | Read file contents (supports code, images, PDFs, Jupyter notebooks) |
 | `Edit` | Make targeted string replacements in files |
 | `Write` | Create new files or fully rewrite existing ones |
-| `Bash` | Execute arbitrary shell commands |
 | `Glob` | Find files by pattern (e.g., `**/*.ts`) |
-| `Grep` | Search file contents with regex |
-| `WebFetch` | Fetch and process web content |
-| `WebSearch` | Search the web for information |
-| `Agent` | Launch sub-agents for parallel or isolated work |
-| `TodoWrite` | Track task progress in a structured list |
 | `NotebookEdit` | Edit Jupyter notebook cells |
 
-Tools can be called in parallel when their inputs are independent, improving throughput on complex tasks.
+### Search
+
+| Tool | Purpose |
+|------|---------|
+| `Grep` | Search file contents with regex (built on ripgrep) |
+| `Glob` | Find files by name/path pattern |
+
+### Execution
+
+| Tool | Purpose |
+|------|---------|
+| `Bash` | Execute arbitrary shell commands |
+
+### Web
+
+| Tool | Purpose |
+|------|---------|
+| `WebFetch` | Fetch and process web content |
+| `WebSearch` | Search the web for information |
+
+### Orchestration
+
+| Tool | Purpose |
+|------|---------|
+| `Agent` | Launch sub-agents for parallel or isolated work |
+| `TodoWrite` | Track task progress in a structured list |
+| `AskUserQuestion` | Get clarification or decisions from the user |
+
+Tools can be called **in parallel** when their inputs are independent, improving throughput on complex tasks. Claude chooses which tools to use based on the prompt and what it learns at each step.
+
+**Example tool chain** for "fix failing tests":
+1. `Bash` — Run test suite, see what's failing
+2. `Read` — Read error output, understand the issue
+3. `Grep` / `Glob` — Search for relevant files
+4. `Read` — Read files for context
+5. `Edit` — Implement the fix
+6. `Bash` — Run tests again to verify
 
 ## Sub-Agents
 
-The `Agent` tool spawns specialized sub-agents that run as child processes with their own context windows. Agent types include:
+The `Agent` tool spawns specialized sub-agents that run as child processes with their own context windows:
 
-- **Explore** — Fast codebase exploration (glob, grep, read)
-- **Plan** — Architecture and implementation planning
-- **general-purpose** — Full tool access for complex sub-tasks
-- **claude-code-guide** — Documentation and usage guidance
+| Agent Type | Purpose | Tools Available |
+|------------|---------|-----------------|
+| **Explore** | Fast codebase exploration | Glob, Grep, Read (read-only) |
+| **Plan** | Architecture and implementation planning | All read tools |
+| **general-purpose** | Full tool access for complex sub-tasks | All tools |
+| **claude-code-guide** | Documentation and usage guidance | Read, Web tools |
 
-Sub-agents can run in the **foreground** (blocking, when results are needed immediately) or **background** (non-blocking, for independent work). They can also use **git worktrees** for isolated file changes.
+**Execution modes:**
+- **Foreground** — Blocking; use when results are needed immediately.
+- **Background** — Non-blocking; for independent parallel work. You're notified on completion.
+- **Worktree isolation** — `isolation: "worktree"` gives the agent an isolated git worktree copy of the repo.
+
+**Custom sub-agents** can be created via `/agents` or by placing `AGENT.md` files in `~/.claude/agents/` or `.claude/agents/`. Custom agents support:
+- Tool whitelisting/blacklisting
+- Model selection (sonnet, opus, haiku)
+- Persistent memory across sessions
+- Lifecycle hooks
+- MCP server access
+
+**When to use sub-agents vs. main conversation:**
+- **Sub-agents**: Verbose output, context isolation, restricted tools, parallel work
+- **Main conversation**: Frequent back-and-forth, shared context across phases
 
 ## Context Management
 
 Claude Code automatically manages its context window:
 
-- **Automatic compression** — When approaching context limits, prior messages are compressed to preserve the most relevant information.
-- **File reading** — Files are read on-demand rather than pre-loaded, keeping context focused.
-- **Cost tracking** — Token usage and costs are displayed per session.
-- **Session continuity** — The `/compact` command manually summarizes and compresses the conversation to free context space.
+- **Auto-compaction** — When approaching ~95% of context limits, Claude automatically clears old tool outputs first, then summarizes the conversation. CLAUDE.md instructions are preserved through compaction.
+- **On-demand reading** — Files are read on-demand rather than pre-loaded, keeping context focused.
+- **Manual compaction** — The `/compact` command manually summarizes the conversation. Use `/compact focus on X` to re-focus context on a specific topic.
+- **Context inspection** — `/context` shows what's consuming context space.
+- **Cost tracking** — Token usage and costs are displayed per session via `/cost`.
+
+### Context Cost by Feature
+
+| Feature | When Loaded | Cost | Best For |
+|---------|-------------|------|----------|
+| CLAUDE.md | Session start | Every request | Always-on rules |
+| Skills | Start (description) + invocation (content) | Low → High | On-demand knowledge |
+| MCP servers | Session start (tool definitions) | Every request | External connections |
+| Sub-agents | On spawn | Isolated context | Context isolation |
+| Hooks | On event | Zero (unless returns output) | Automation |
+
+## Execution Environments
+
+Claude Code runs in three environments:
+
+| Environment | Where Code Runs | Use Case |
+|-------------|-----------------|----------|
+| **Local** | Your machine | Default; full access to files, tools, environment |
+| **Cloud** | Anthropic-managed VMs | Offload tasks; work on repos you don't have locally |
+| **Remote Control** | Your machine, controlled from browser | Web UI while keeping everything local |
 
 ## Model Usage
 
-- Claude Code is powered by Claude's latest models (Opus, Sonnet, Haiku).
-- Users can toggle between models and speed modes (e.g., `/model` to switch, `/fast` for faster output).
-- Sub-agents may use different models depending on the task complexity.
+- **Claude Sonnet** — Default for most coding tasks; good balance of speed and capability.
+- **Claude Opus** — Stronger reasoning for complex architectural decisions.
+- **Claude Haiku** — Fast and cheap for simple tasks; used by Explore sub-agents.
+- Switch with `/model` during a session or `claude --model <name>` at startup.
+- Sub-agents may use different models depending on task complexity.
+
+## Safety Mechanisms
+
+- **Checkpoints** — Every file edit is reversible. Press `Esc` twice to rewind to previous state, or ask Claude to undo.
+- **Permission prompts** — Dangerous operations require explicit approval.
+- **Plan mode** — Claude uses read-only tools only, creates a plan you can approve before execution.
+- **Sandboxing** — Optional filesystem and network restrictions via settings.

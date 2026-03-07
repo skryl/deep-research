@@ -2,72 +2,197 @@
 
 ## Slash Commands
 
-Claude Code provides built-in slash commands for controlling the session:
+Type `/` in a session to see available commands:
 
 | Command | Description |
 |---------|-------------|
-| `/help` | Show help and usage information |
-| `/compact` | Compress conversation to free context space |
-| `/clear` | Clear conversation history |
+| `/help` | Show available commands |
+| `/resume` | Pick a previous conversation to continue |
+| `/continue` | Continue most recent session (also `-c` flag) |
+| `/context` | See what's consuming context space |
+| `/memory` | View and manage CLAUDE.md files and auto memory |
+| `/init` | Generate a CLAUDE.md for your project |
+| `/agents` | Create and manage custom sub-agents |
+| `/permissions` | View and manage tool permissions |
+| `/hooks` | Create and manage automation hooks |
+| `/mcp` | Connect MCP servers |
+| `/compact` | Manually compress context |
 | `/model` | Switch between Claude models |
 | `/fast` | Toggle fast output mode |
-| `/permissions` | Review and manage tool permissions |
-| `/memory` | Edit CLAUDE.md memory files |
-| `/cost` | Show token usage and cost for the session |
-| `/review` | Request a code review |
-| `/pr-comments` | View PR comments |
-| `/init` | Initialize a new project with CLAUDE.md |
+| `/status` | View session info |
+| `/doctor` | Diagnose common issues |
+| `/cost` | Track token usage and costs |
+| `/clear` | Clear conversation history |
+| `/login` | Switch accounts mid-session |
 
-Users can also create **custom slash commands** by placing markdown files in `.claude/commands/` (project-scoped) or `~/.claude/commands/` (global). These become available as `/<filename>` and can contain prompt templates with `$ARGUMENTS` placeholders.
+**Bundled skills** (invoke like slash commands): `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`
+
+### Custom Slash Commands (Skills)
+
+Users can create custom commands by placing markdown files in:
+- `.claude/skills/<name>/SKILL.md` — Project-scoped (shared via git)
+- `~/.claude/skills/<name>/SKILL.md` — Global (personal)
+
+These become available as `/<name>` and support:
+- `$ARGUMENTS` placeholders for parameters
+- `!`command`` syntax for dynamic context injection (shell output)
+- Frontmatter for model, tools, and behavior control
+- Supporting files organized in the skill directory
+
+**Example:**
+```yaml
+---
+name: fix-issue
+description: Fix a GitHub issue
+allowed-tools: Bash, Read, Edit, Write, Grep, Glob
+---
+
+Fix GitHub issue $ARGUMENTS following project standards.
+1. Read the issue: !`gh issue view $0`
+2. Implement the fix
+3. Run tests
+4. Commit with descriptive message
+```
+
+Invoke with `/fix-issue 123`.
 
 ## Permissions Model
 
-Claude Code has a layered permissions system that controls what actions require user approval:
+Claude Code has a layered permissions system controlling what actions require user approval.
 
-**Permission Modes:**
-- **Default** — Most actions require approval; read-only operations are allowed.
-- **Relaxed** — Common safe operations (file edits, known commands) are auto-approved.
-- **Custom** — User-defined rules for what to allow or deny.
+### Permission Modes
 
-**Permission Configuration:**
+| Mode | Behavior |
+|------|----------|
+| `default` | Asks on first use of each tool type |
+| `acceptEdits` | Auto-accepts file edits, asks for shell commands |
+| `plan` | Read-only analysis only (no modifications) |
+| `dontAsk` | Auto-denies unless pre-approved in rules |
+| `bypassPermissions` | Skips all checks (use with extreme caution) |
+
+### Permission Rules
+
+Configured in settings files with allow/deny/ask lists:
+
 ```json
 {
   "permissions": {
-    "allow": ["Read", "Glob", "Grep", "WebSearch"],
-    "deny": ["Bash(rm *)"]
+    "allow": [
+      "Bash(npm run test *)",
+      "Bash(git commit *)",
+      "Read(~/.zshrc)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Read(./.env)",
+      "Read(./secrets/**)"
+    ],
+    "ask": [
+      "WebFetch"
+    ]
   }
 }
 ```
 
-Permissions can be set globally (`~/.claude/settings.json`), per-project (`.claude/settings.json`), or per-session.
+### Rule Syntax
 
-## Memory with CLAUDE.md
+| Pattern | Matches |
+|---------|---------|
+| `Bash` | All bash commands |
+| `Bash(npm run build)` | Exact command |
+| `Bash(npm run *)` | Commands starting with `npm run ` |
+| `Bash(* --help)` | Commands ending with ` --help` |
+| `Read(./.env)` | Specific file |
+| `Read(/src/**)` | Directory patterns |
+| `WebFetch(domain:github.com)` | Specific domain |
+| `Edit(/docs/**)` | Edit operations on pattern |
+| `Agent(Explore)` | Specific sub-agent type |
+| `mcp__github__*` | All tools from an MCP server |
 
-CLAUDE.md files serve as persistent memory and instructions for Claude Code. They are loaded automatically at the start of each session:
+### Tool Safety Tiers
+
+| Tier | Tools | Default Behavior |
+|------|-------|-----------------|
+| Read-only | Glob, Grep, Read | No approval needed |
+| File modifications | Edit, Write | Ask on first use per session |
+| Shell execution | Bash | Ask every time (unless pre-approved) |
+
+## Memory
+
+### CLAUDE.md Files (Explicit Memory)
+
+CLAUDE.md files serve as persistent instructions loaded automatically at the start of each session:
 
 | Location | Scope | Use Case |
 |----------|-------|----------|
 | `./CLAUDE.md` | Project root | Project conventions, architecture, build commands |
-| `./src/CLAUDE.md` | Subdirectory | Module-specific instructions |
+| `.claude/rules/*.md` | Project rules dir | Scoped rules (e.g., `testing.md`, `api-design.md`) |
+| `./CLAUDE.local.md` | Project (gitignored) | Personal project overrides |
 | `~/.claude/CLAUDE.md` | Global | Personal preferences across all projects |
 
-**Common CLAUDE.md contents:**
+**What to include:**
 - Build and test commands (`npm test`, `cargo build`)
-- Code style conventions (naming, formatting)
+- Code style conventions (naming, formatting, indentation)
 - Architecture overview and key abstractions
+- "Never do X" rules
 - Frequently used workflows
-- Things to avoid or watch out for
 
-CLAUDE.md files are injected into the system prompt, so they influence every interaction within their scope.
+**Best practices:**
+- Keep under 200 lines (every line costs tokens on every request)
+- Use markdown headers and bullets for structure
+- Be specific: "Use 2-space indentation" not "Format code properly"
+- Move detailed reference material to skills (loaded on-demand)
+- Use `@path/to/file` imports for additional context files
+- Scope rules to file types with YAML frontmatter `paths:` field
+
+### Auto Memory
+
+Claude automatically saves learnings across sessions without explicit user action:
+
+- **What it saves:** Build commands, debugging insights, architecture notes, code style preferences, workflow habits
+- **Storage:** `~/.claude/projects/<project>/memory/MEMORY.md`
+- **Loading:** First 200 lines load every session; full directory available on-demand
+- **Scope:** Machine-local only (not shared across devices)
+- **Control:** Enable/disable with `/memory` command or `autoMemoryEnabled` setting
+
+## Sessions
+
+- **Independent:** Each new session starts with fresh context (no conversation history from prior sessions).
+- **Directory-tied:** Resume only shows sessions from the current directory.
+- **Resume:** `claude --continue` resumes the most recent session; `claude -r <session-id>` resumes a specific one; `/resume` lets you pick interactively.
+- **Fork:** `--fork-session` creates a new session with preserved history context.
+- **Cross-branch:** When you switch git branches, files update but conversation history stays.
+- **Parallel:** Use git worktrees to run parallel Claude Code sessions in separate directories.
 
 ## IDE Integration
 
-Claude Code integrates with popular editors:
+### VS Code
+- Official extension from the Marketplace (search "Claude Code")
+- Embedded chat panel alongside the editor
+- `@file` mentions to reference files
+- Inline diffs and plan review
+- Resume past conversations
+- Full keyboard shortcuts
 
-- **VS Code** — Official extension providing an embedded Claude Code panel alongside the editor. Supports sending selected code, viewing inline diffs, and accepting/rejecting changes.
-- **JetBrains IDEs** — Plugin available for IntelliJ, PyCharm, WebStorm, etc. with similar capabilities.
+### JetBrains IDEs
+- Plugin for IntelliJ, PyCharm, WebStorm, etc.
+- Interactive diff viewing
+- Selection context sharing
+- WSL and remote development support
 
-IDE integrations communicate with the Claude Code CLI process, so all configuration (permissions, CLAUDE.md, hooks) applies consistently.
+### Desktop App
+- Visual diff review
+- Multiple sessions side-by-side
+- Schedule recurring tasks
+- Cloud session management
+- Remote Control support
+
+### Browser (VS Code Web)
+- No local setup needed
+- Cloud execution
+- `/teleport` to move between web and terminal
+
+All interfaces share the same CLAUDE.md files, settings, MCP servers, skills, and sub-agents.
 
 ## Git Integration
 
@@ -77,4 +202,13 @@ Claude Code has deep git awareness:
 - Creates commits with descriptive messages
 - Creates branches and pull requests via `gh` CLI
 - Respects uncommitted work and avoids destructive operations by default
-- Can be used for code review workflows
+- Supports code review workflows (`/review`, PR comment analysis)
+- Checkpoints every file edit for easy rollback
+
+## Chrome Extension
+
+```bash
+claude --chrome
+```
+
+Enables browser control for web testing, form filling, and debugging web applications.
