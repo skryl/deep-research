@@ -73,32 +73,44 @@
         line-height: 1.6;
       }
       .docs-sidebar .sidebar-topic {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
       }
       .docs-sidebar .sidebar-topic-title {
         font-weight: 600;
-        margin-bottom: 0.25rem;
-        display: block;
-        text-decoration: none;
-        color: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+        padding: 0.35rem 0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
       }
-      .docs-sidebar .sidebar-topic-title:hover {
-        opacity: 0.7;
+      .docs-sidebar .sidebar-topic-title::-webkit-details-marker {
+        display: none;
+      }
+      .docs-sidebar .sidebar-topic-title::before {
+        content: '▸';
+        font-size: 0.7rem;
+        transition: transform 0.15s;
+        display: inline-block;
+      }
+      .docs-sidebar details[open] > .sidebar-topic-title::before {
+        transform: rotate(90deg);
       }
       .docs-sidebar .sidebar-pages {
         list-style: none;
         padding: 0;
-        margin: 0;
+        margin: 0.25rem 0 0 0;
       }
       .docs-sidebar .sidebar-pages li {
         margin: 0;
       }
       .docs-sidebar .sidebar-pages a {
         display: block;
-        padding: 0.2rem 0 0.2rem 0.75rem;
+        padding: 0.2rem 0 0.2rem 1rem;
         text-decoration: none;
         color: inherit;
-        opacity: 0.6;
+        opacity: 0.55;
         border-left: 2px solid transparent;
         transition: opacity 0.15s, border-color 0.15s;
       }
@@ -107,8 +119,8 @@
       }
       .docs-sidebar .sidebar-pages a.active {
         opacity: 1;
-        font-weight: 500;
-        border-left-color: currentColor;
+        font-weight: 600;
+        border-left-color: #e67e22;
       }
       .docs-content {
         flex: 1;
@@ -124,14 +136,14 @@
           position: static;
           max-height: none;
           border-right: none;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-          padding-right: 0;
-          padding-bottom: 1rem;
-          margin-bottom: 1rem;
+          padding: 0.75rem 1rem;
+          margin-bottom: 1.5rem;
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 0.5rem;
         }
         .dark .docs-sidebar {
           border-right-color: transparent;
-          border-bottom-color: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
         }
       }
     </style>

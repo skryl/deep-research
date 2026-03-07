@@ -1,11 +1,15 @@
 {{- $researchSection := site.GetPage "/research" -}}
 {{- $currentPage := . -}}
+{{- $currentSection := .CurrentSection -}}
 
 <aside class="docs-sidebar">
   <nav>
     {{- range $researchSection.Sections.ByWeight -}}
-    <div class="sidebar-topic">
-      <a class="sidebar-topic-title" href="{{- .Permalink -}}">{{- .Title -}}</a>
+    {{- $isCurrentTopic := or (eq . $currentPage) (eq . $currentSection) -}}
+    <details class="sidebar-topic" {{ if $isCurrentTopic }}open{{ end }}>
+      <summary class="sidebar-topic-title">
+        {{- .Title | replaceRE ` - Deep Research$` `` -}}
+      </summary>
       {{- $pages := .Pages.ByWeight -}}
       {{- if $pages -}}
       <ul class="sidebar-pages">
@@ -19,7 +23,7 @@
         {{- end -}}
       </ul>
       {{- end -}}
-    </div>
+    </details>
     {{- end -}}
   </nav>
 </aside>

@@ -64,6 +64,8 @@ The `content/` directory is gitignored — always generated at build time.
 
 ## Testing Locally
 
+### Hugo build (required before pushing)
+
 ```bash
 bash scripts/build-content.sh && hugo --minify
 ```
@@ -75,6 +77,19 @@ Install Hugo if needed:
 ```bash
 curl -sL https://github.com/gohugoio/hugo/releases/download/v0.157.0/hugo_extended_0.157.0_linux-amd64.tar.gz | tar xz -C /usr/local/bin hugo
 ```
+
+### Browser rendering tests (Playwright)
+
+```bash
+npm test                  # Run all tests (desktop + mobile)
+npm run test:desktop      # Desktop viewport only
+npm run test:mobile       # Mobile viewport only
+```
+
+Tests verify sidebar layout, active page highlighting, responsive behavior,
+and content rendering. Screenshots are saved to `test-results/` for visual review.
+
+Requires Chromium — set `CHROMIUM_PATH` env var if not at the default location.
 
 ## Hugo Theme
 
