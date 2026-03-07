@@ -5,11 +5,9 @@ paginate = 10
 
 theme = "paper"
 
-[author]
-  name = "skryl"
-
 [params]
   color = "linen"
+  author = "skryl"
   name = "Deep Research"
   bio = "A collection of deep dives on various topics"
   github = "skryl"
