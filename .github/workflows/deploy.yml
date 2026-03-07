@@ -19,20 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          submodules: true
 
-      - run: pip install "mkdocs<2" mkdocs-material
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "latest"
+          extended: true
 
-      - run: bash scripts/build-docs.sh
+      - run: bash scripts/build-content.sh
 
-      - run: mkdocs build --strict
+      - run: hugo --minify
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: public
 
   deploy:
     needs: build
