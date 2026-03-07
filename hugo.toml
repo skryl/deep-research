@@ -1,0 +1,19 @@
+baseURL = "https://skryl.github.io/deep-research/"
+title = "Deep Research"
+languageCode = "en"
+paginate = 10
+
+theme = "paper"
+
+[params]
+  color = "linen"
+  name = "Deep Research"
+  bio = "A collection of deep dives on various topics"
+  github = "skryl"
+
+[taxonomies]
+  tag = "tags"
+  series = "series"
+
+[markup.goldmark.renderer]
+  unsafe = true
