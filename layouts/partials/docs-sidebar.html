@@ -1,0 +1,25 @@
+{{- $researchSection := site.GetPage "/research" -}}
+{{- $currentPage := . -}}
+
+<aside class="docs-sidebar">
+  <nav>
+    {{- range $researchSection.Sections.ByWeight -}}
+    <div class="sidebar-topic">
+      <a class="sidebar-topic-title" href="{{- .Permalink -}}">{{- .Title -}}</a>
+      {{- $pages := .Pages.ByWeight -}}
+      {{- if $pages -}}
+      <ul class="sidebar-pages">
+        {{- range $pages -}}
+        <li>
+          <a
+            href="{{- .Permalink -}}"
+            {{- if eq . $currentPage }} class="active"{{- end -}}
+          >{{- .Title -}}</a>
+        </li>
+        {{- end -}}
+      </ul>
+      {{- end -}}
+    </div>
+    {{- end -}}
+  </nav>
+</aside>

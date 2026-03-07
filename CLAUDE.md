@@ -10,9 +10,13 @@ A Hugo-based site for deep dives on various topics, deployed to GitHub Pages.
     README.md              # Overview and key findings (required)
     *.md                   # Sub-topic pages
 hugo.toml                  # Hugo config (Paper theme)
-layouts/                   # Template overrides for Hugo 0.157+ compat
-  _default/single.html
-  partials/head.html
+layouts/
+  _default/single.html     # Hugo 0.157+ compat fix (site.Author → site.Params.author)
+  partials/head.html        # Same compat fix for head partial
+  research/baseof.html      # Docs layout with sidebar (wider than default)
+  research/list.html        # Section/topic overview template
+  research/single.html      # Individual doc page template
+  partials/docs-sidebar.html # Sidebar navigation partial
 themes/paper/              # Git submodule (nanxiaobei/hugo-paper)
 scripts/build-content.sh   # Generates Hugo content/ from research files
 .github/workflows/deploy.yml
@@ -45,10 +49,18 @@ scripts/build-content.sh   # Generates Hugo content/ from research files
 ## Content Build Pipeline
 
 Research files in `<year>/` are plain markdown with no Hugo front matter. The script
-`scripts/build-content.sh` generates `content/post/` with proper TOML front matter:
-- Each topic's `README.md` becomes the overview post
-- Each sub-topic `.md` becomes a separate post in the same series
-- The `content/` directory is gitignored — always generated at build time
+`scripts/build-content.sh` generates Hugo `content/` with proper TOML front matter:
+
+- `content/_index.md` — homepage
+- `content/research/_index.md` — research section index
+- `content/research/<topic>/_index.md` — topic overview (from README.md)
+- `content/research/<topic>/<page>.md` — sub-topic pages
+
+All research content uses `type = "research"` which activates the docs layout
+with a sticky sidebar showing the document index. Pages are nested under their
+topic directory in the sidebar and highlighted when active.
+
+The `content/` directory is gitignored — always generated at build time.
 
 ## Testing Locally
 
@@ -66,8 +78,9 @@ curl -sL https://github.com/gohugoio/hugo/releases/download/v0.157.0/hugo_extend
 
 ## Hugo Theme
 
-Uses Paper theme (git submodule at `themes/paper`). Two layout overrides exist in
-`layouts/` to fix Hugo 0.157 compatibility (the theme uses deprecated `site.Author`).
+Uses Paper theme (git submodule at `themes/paper`). Layout overrides in `layouts/`:
+- `_default/single.html` and `partials/head.html` — fix Hugo 0.157 deprecation of `site.Author`
+- `research/` — docs-style layout with sidebar navigation (wider max-width, sticky sidebar, active page highlighting, responsive collapse on mobile)
 
 ## Deployment
 
