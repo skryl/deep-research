@@ -1,0 +1,21 @@
+{
+  "name": "deep-research",
+  "version": "1.0.0",
+  "description": "A collection of deep dives on various topics, organized by date.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:desktop": "npx playwright test --project=desktop",
+    "test:mobile": "npx playwright test --project=mobile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:35597/git/skryl/deep-research"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
