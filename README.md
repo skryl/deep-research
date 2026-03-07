@@ -15,4 +15,6 @@ A collection of deep dives on various topics, organized by date.
 
 ### 2026
 
-*No research entries yet.*
+| Date | Topic | Description |
+|------|-------|-------------|
+| 2026-03-07 | [Claude Code](2026/260307-claude-code/) | Anthropic's agentic CLI coding tool — architecture, features, configuration, workflows, and SDK |
