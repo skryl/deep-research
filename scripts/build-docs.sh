@@ -21,11 +21,15 @@ Research topics from 2026.
 EOF
 fi
 
-# For each topic, copy README.md as index.md if no index.md exists
+# For each topic, copy README.md as index.md and remove README.md
 for dir in docs/2026/*/; do
-  if [ -f "$dir/README.md" ] && [ ! -f "$dir/index.md" ]; then
+  if [ -f "$dir/README.md" ]; then
     cp "$dir/README.md" "$dir/index.md"
+    rm "$dir/README.md"
   fi
 done
+
+# Fix relative links ending in / to point to index.md (MkDocs strict mode)
+find docs -name '*.md' -exec sed -i 's|\](/\?\([^)]*\)/)|](\1/index.md)|g' {} +
 
 echo "docs/ assembled successfully"
