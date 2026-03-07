@@ -4,10 +4,25 @@
 set -euo pipefail
 
 rm -rf content
-mkdir -p content/post
+mkdir -p content
+
+# Create homepage
+cat > content/_index.md <<'HOMEPAGE'
++++
+title = "Deep Research"
++++
+HOMEPAGE
+
+# Create research section
+mkdir -p content/research
+cat > content/research/_index.md <<'SECTION'
++++
+title = "Research"
++++
+SECTION
 
 # Process each research topic
-for dir in 2026/*/; do
+for dir in 20[0-9][0-9]/*/; do
   slug=$(basename "$dir")
   date_raw=$(echo "$slug" | grep -oP '^\d{6}')
   # Convert YYMMDD to YYYY-MM-DD
@@ -17,27 +32,26 @@ for dir in 2026/*/; do
   # Read title from README.md first heading
   title=$(head -1 "$dir/README.md" | sed 's/^#\s*//')
   description=$(sed -n '2,10p' "$dir/README.md" | grep -oP '(?<=\*\*Topic:\*\* ).*' || echo '')
-  series_name="$title"
   tag=$(echo "$topic" | tr '-' ' ')
 
-  # Create overview post from README
-  mkdir -p "content/post/$slug"
+  # Create topic section with _index.md from README
+  mkdir -p "content/research/$topic"
   {
     cat <<EOF
 +++
 title = "$title"
 date = "${date}T00:00:00Z"
 description = "$description"
-series = ["$series_name"]
 tags = ["$tag"]
 weight = 1
+type = "research"
 +++
 
 EOF
     sed '1{/^#/d}' "$dir/README.md" | sed '/^\*\*Date:\*\*/d; /^\*\*Topic:\*\*/d'
-  } > "content/post/$slug/index.md"
+  } > "content/research/$topic/_index.md"
 
-  # Create a post for each sub-page
+  # Create a page for each sub-topic
   weight=2
   for file in "$dir"/*.md; do
     fname=$(basename "$file")
@@ -46,21 +60,20 @@ EOF
     page_title=$(head -1 "$file" | sed 's/^#\s*//')
     page_slug="${fname%.md}"
 
-    mkdir -p "content/post/${slug}-${page_slug}"
     {
       cat <<EOF
 +++
-title = "$title — $page_title"
+title = "$page_title"
 date = "${date}T00:0${weight}:00Z"
-description = "$page_title section of $title deep research"
-series = ["$series_name"]
+description = "$page_title — $title"
 tags = ["$tag"]
 weight = $weight
+type = "research"
 +++
 
 EOF
       tail -n +2 "$file"
-    } > "content/post/${slug}-${page_slug}/index.md"
+    } > "content/research/$topic/$page_slug.md"
 
     weight=$((weight + 1))
   done
