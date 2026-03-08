@@ -1,201 +1,185 @@
-# CIRCT Ecosystem: SystemVerilog, LLHD, and EDA Integration
+# Ecosystem Integration, HDLs, and Real-World Adoption
 
-## The Moore Dialect: SystemVerilog Frontend
+This page covers how CIRCT/MLIR integrates with existing hardware description languages and EDA tools, and surveys real-world adoption of these tools in industry and research.
 
-### Purpose
+## Integration with Existing HDLs
 
-The Moore dialect provides CIRCT's SystemVerilog ingestion pathway. Its main goal is to serve as the target for the `ImportVerilog` conversion, which translates a fully parsed, type-checked, and elaborated Slang AST into MLIR operations.
+### Chisel / FIRRTL — The Primary Frontend
 
-### Design Philosophy
+Chisel is a hardware construction language embedded in Scala, and FIRRTL (Flexible Intermediate Representation for RTL) is its compiler IR. The CIRCT integration is the most mature frontend path:
 
-The Moore dialect faithfully captures full SystemVerilog types and semantics, providing a platform for transformation passes to:
-- Resolve language quirks and ambiguities
-- Analyze the design at a high level
-- Lower to CIRCT's core dialects (hw, comb, seq)
+**Compilation flow**:
+1. Chisel elaboration produces CHIRRTL (Chisel-specific FIRRTL extensions)
+2. `firtool` (CIRCT's FIRRTL compiler) ingests the FIRRTL text format
+3. The `firrtl` dialect is progressively lowered through High/Mid/Low FIRRTL forms
+4. Lowering converts `firrtl` to `hw` + `comb` + `seq` + `verif` + `ltl`
+5. Final emission produces SystemVerilog
 
-### Moore vs. SV Dialect
+**Performance**: The MLIR-based FIRRTL Compiler (MFC) provides 10-100x speedup over the legacy Scala FIRRTL Compiler (SFC), thanks to C++ implementation and MLIR's efficient data structures. SiFive's `chisel-circt` library provides a drop-in replacement interface.
 
-CIRCT has two SystemVerilog-related dialects that serve different purposes:
+**Chipyard ecosystem**: The Chipyard SoC design framework (UC Berkeley) uses CIRCT as its compilation backend. Designs are elaborated in Chisel, compiled through `firtool`, and can be simulated via Arcilator, Verilator, or commercial tools.
 
-| Aspect | Moore Dialect | SV Dialect |
-|--------|--------------|------------|
-| Direction | **Ingestion** (parsing SV into MLIR) | **Emission** (generating SV from MLIR) |
-| Goal | Faithfully capture SV semantics | Produce clean, readable SV output |
-| Status | Active development | Production use |
+### Zaozi — Direct MLIR Construction (2025)
 
-The two dialects may eventually converge, but keeping them separate allows the Moore dialect to evolve rapidly without disrupting the production SV emission pipeline.
+Presented at LATTE '25, Zaozi reinvents the Chisel concept in Scala 3 but directly constructs MLIR using CIRCT's C-API, bypassing the textual FIRRTL serialization step entirely. This eliminates serialization overhead and accelerates elaboration. Zaozi also introduces a sound, reference-based type system for Register, Wire, IO, and Probe, making the Scala runtime types immutable.
 
-### Frontend: circt-verilog / Slang
+### Amaranth HDL (formerly nMigen)
 
-The `circt-verilog` tool uses **Slang** as its SystemVerilog parser. Slang is a high-quality, standards-compliant SystemVerilog frontend that handles the full complexity of the language including:
-- Elaboration and type checking
-- Generate blocks and parameterization
-- Interface and modport resolution
+Amaranth is a Python-based hardware definition language with its own toolchain. It currently targets:
+- Yosys (open-source synthesis) via RTLIL
+- Vendor tools via generated Verilog
 
-### Supported Constructs
+There is no direct CIRCT/MLIR integration. Integration between Amaranth and CIRCT-based flows happens through Verilog as an interchange format. The LiteX SoC builder can integrate Amaranth cores by first generating them as Verilog.
 
-The Moore dialect supports key SystemVerilog constructs including:
-- **Procedures**: `initial`, `final`, `always`, `always_comb`, `always_latch`, `always_ff` (via `moore.procedure`)
-- **Expressions**: concatenation (`{x, y, z}`), shift operations, conditional expressions
-- **Data types**: unpacked arrays, structs, unions, enums
-- **Hierarchy**: module instantiation, port connections
+### SpinalHDL
 
-### sv-tests Compliance
+SpinalHDL is a Scala-based HDL (separate from Chisel) that can emit VHDL or Verilog. It has no direct CIRCT integration, but adding RTLIL or FIRRTL backends has been noted as feasible. Like Amaranth, integration with CIRCT-based tools currently goes through Verilog.
 
-As of early 2026, CIRCT's SystemVerilog compliance stands at **73%** on the sv-tests suite (CHIPS Alliance), compared to:
-- Verilator: 94%
-- Icarus Verilog: 80%
+### Bluespec SystemVerilog (BSV)
 
-This reflects the relative youth of the Moore frontend, but progress has been rapid.
+Bluespec uses guarded atomic actions (rules) to describe hardware. While conceptually aligned with some CIRCT concepts (particularly the dynamic scheduling in the Handshake dialect), there is no direct integration. Bluespec compiles to Verilog, which could be ingested by CIRCT's Moore dialect.
 
----
+### Current State of HDL Integration
 
-## LLHD: Low Level Hardware Description
+The hardware design ecosystem currently relies on **Verilog as the universal interchange format**. Even as new DSLs avoid VHDL/Verilog at the source level, Verilog remains the bridge between tools. CIRCT's long-term vision is to provide a richer interchange at the MLIR level, but this requires:
+1. Mature frontends for each HDL (currently only Chisel/FIRRTL is production-ready)
+2. Agreement on common abstractions (the `hw`/`comb`/`seq` dialects serve this role)
+3. Community adoption of MLIR-based tooling
 
-### Background
+## ESI: Elastic Silicon Interconnect
 
-**LLHD** (Low Level Hardware Description) was proposed by Fabian Schuiki, Andreas Kurth, Tobias Grosser, and Luca Benini at **PLDI 2020** as a multi-level intermediate representation for hardware description languages.
+ESI is a CIRCT dialect (originally from Microsoft) that addresses the SoC interconnect problem.
 
 ### The Problem
 
-Modern HDLs (SystemVerilog, VHDL) are enormously complex, and each EDA tool lowers them to its own proprietary IR. These tools:
-- Are monolithic and mostly proprietary
-- Disagree in their implementation of HDL semantics
-- Maintain many redundant, incompatible IRs
-- Cannot share a single IR through the entire design flow
+Wire signaling protocols in FPGA/ASIC design are ad-hoc. Even "standard" protocols like AXI have many minor variants. Connecting IP blocks requires manual adaptation of signaling, data widths, and timing — a major source of integration bugs.
 
-### LLHD's Design (Inspired by LLVM)
+### ESI's Solution
 
-LLHD aims to do for hardware what LLVM did for software: provide a single, well-defined IR that tools can share. Designs are represented by three types of "units":
+- **Typed channels**: Point-to-point connections with rich data types (ints, structs, arrays, unions, variable-length lists). The width of a channel is not necessarily the same as the message width.
+- **Latency-insensitive semantics**: FIFO-based flow control. Modules communicate without assuming fixed latency.
+- **Windowing**: Large messages can be broken into frames, trading bandwidth for wire area.
+- **Service abstraction**: The ESI compiler chooses the communication substrate (AXI, Avalon-MM, custom) based on requirements.
+- **Software bridge**: ESI creates high-level APIs for host software to communicate with hardware modules using typed messages, abstracting away DMA, MMIO, and device drivers.
 
-1. **Functions** -- pure combinational logic, equivalent to LLVM functions
-2. **Processes** -- sequential logic with control flow, using basic blocks like LLVM IR
-3. **Entities** -- data-flow units consisting of an unordered set of instructions forming a data-flow graph (unique to hardware -- no software equivalent)
+### Cosimulation
 
-Names follow LLVM conventions: global names (`@`-prefixed), local names (`%`-prefixed), and anonymous names.
+ESI provides cosimulation endpoints that bridge hardware simulation (Arcilator) with software testbenches, enabling hardware-software co-verification through typed channels.
 
-### Key Results
+## FPGA-Specific Tooling on MLIR
 
-- The LLHD simulator runs up to **2.4x faster** than commercial simulators while producing equivalent, cycle-accurate results
-- Demonstrated on designs as complex as full CPU cores
-- A reference compiler was built to validate the IR's expressiveness
+### AMD/Xilinx AIR Dialect
 
-### Relationship to CIRCT
+AMD's AIR (AI Runtime) dialect targets their Versal AIE (AI Engine) architecture. It transforms `scf.for` loops into ping-pong buffering patterns for the AIE array, constructing dependency edges for concurrent communication and compute. The ARIES project (FPGA '25) builds on this for a unified MLIR-based AIE compilation flow.
 
-LLHD has been integrated into CIRCT as the `llhd` dialect. The original standalone LLHD project has evolved into part of the broader CIRCT ecosystem:
+### dfg-mlir — Dataflow Graph Dialect
 
-- The **Moore** compiler (Rust-based, by the same author) serves as a hardware compiler frontend that originally output LLHD assembly
-- Moore now depends on the CIRCT project (and transitively on MLIR and LLVM)
-- The LLHD dialect in CIRCT captures event-driven simulation semantics alongside the cycle-accurate semantics of other dialects
+A dialect for modeling static dataflow graphs, used with the Multi-Dataflow Composer (MDC) tool to generate synthesizable FPGA accelerators from high-level dataflow specifications.
 
-### LLHD Dialect in CIRCT
+### FOSDEM 2026: NPU Generation from Linalg
 
-The `llhd` dialect within CIRCT depends on MLIR and LLVM builds. It provides operations for:
-- Signal declarations and assignments
-- Process definitions with wait statements
-- Time-based scheduling (drive-after semantics)
-- Entity instantiation
+A work-in-progress flow generates custom NPU hardware directly from algorithm specifications, starting from MLIR's Linalg dialect and automatically producing synthesizable SystemVerilog via CIRCT. This "algorithm-first" approach inverts the traditional flow where hardware is designed first and then programmed.
 
----
+### Google XLS
 
-## Comparison with Traditional EDA Verification
+Google's XLS (eXtensible Language & Synthesis) is a separate HLS infrastructure that compiles a custom IR to Verilog. While not MLIR-based, there is ongoing exploration of integrating XLS as a backend for hls4ml, potentially complementing CIRCT-based flows.
 
-### Universal Verification Methodology (UVM)
+## Real-World Adoption
 
-UVM is the industry-standard verification methodology, built on SystemVerilog. It provides:
-- **Reusable verification components**: drivers, monitors, scoreboards, agents, environments
-- **Constrained random verification**: automated stimulus generation with functional coverage
-- **Transaction-level modeling**: abstract communication between verification components
-- **Phase management**: standardized simulation phases (build, connect, run, etc.)
+### Production Use
 
-Used by Intel, NVIDIA, Qualcomm, ARM, AMD, and virtually every major semiconductor company.
+| Organization | Usage | Status |
+|-------------|-------|--------|
+| **SiFive** | CIRCT/firtool as the Chisel backend for RISC-V core design. Arcilator for simulation. VCIX dialect for custom AI accelerator targeting. | Production |
+| **Google** | MLIR widely deployed internally. Contributed to CIRCT's founding. XLS for internal HLS. | Production (MLIR); Research (CIRCT) |
+| **Microsoft** | ESI dialect development. FPGA-based accelerator flows. Hot Chips 2022 tutorial on CIRCT. | Research/Production |
+| **AMD/Xilinx** | AIR dialect for Versal AIE. Participants in CIRCT weekly meetings. | Research/Production |
+| **Apple** | MLIR adoption (unspecified hardware applications). | Production (MLIR) |
+| **Intel** | MLIR adoption. | Production (MLIR) |
+| **NVIDIA** | MLIR adoption. | Production (MLIR) |
+| **ARM** | MLIR adoption. | Production (MLIR) |
 
-### The Open-Source UVM Gap
+### Research Groups
 
-UVM has historically been locked to commercial simulators because:
-- UVM is implemented in SystemVerilog, which is enormously complex
-- No open-source SystemVerilog implementation fully supports the UVM class library
-- Commercial tools (VCS, Questa, Xcelium) have exclusive practical support
+| Institution | Project | Focus |
+|------------|---------|-------|
+| **Cornell (CAPRA)** | Calyx, HeteroCL, Allo | HLS compiler infrastructure, ML accelerators |
+| **EPFL (LAP)** | Dynamatic | Dynamic scheduling HLS |
+| **ETH Zurich** | Dynamatic, K-CIRCT, formal verification | Dynamic HLS, formal methods |
+| **UIUC (Chen Lab)** | ScaleHLS, HIDA | Scalable HLS, hierarchical dataflow |
+| **UC Berkeley** | Chipyard | Full SoC design framework on CIRCT |
+| **CERN** | hls4ml, Fast ML | Ultra-low-latency ML inference on FPGAs |
 
-### CIRCT's Approach vs. Traditional EDA
+### Conference Presence
 
-| Aspect | Traditional UVM/EDA | MLIR/CIRCT |
-|--------|-------------------|------------|
-| **Maturity** | Industry standard since ~2011 | Experimental, rapidly evolving |
-| **Tooling** | Proprietary (Synopsys, Cadence, Siemens) | Open source (LLVM-based) |
-| **IR** | Verilog/VHDL as interchange | MLIR multi-level dialects |
-| **Modularity** | Tool-specific, inconsistent | Library-based, composable |
-| **UVM Support** | Full commercial support | Recently demonstrated (2026) |
-| **Formal + Simulation** | Separate tools and flows | Unified IR and passes |
-| **Cost** | Expensive licenses ($100K+/seat/year) | Free and open source |
-| **Assertion Language** | SVA (IEEE 1800) | LTL + Verif dialects (maps from SVA) |
-| **Coverage** | Built-in functional coverage | Simulator-independent coverage research |
+CIRCT/MLIR hardware work appears regularly at:
 
-### SystemVerilog Assertions (SVA) vs. CIRCT Verif/LTL
+- **LLVM Developers' Meeting**: Annual MLIR workshop, Arcilator tech talks
+- **ASPLOS**: Calyx (2021), HIDA (2024)
+- **HPCA**: ScaleHLS (2022)
+- **FPGA**: ARIES (2025), multiple HLS papers
+- **LATTE**: Workshop on languages, tools, and techniques for accelerator design (co-located with ASPLOS). Zaozi, JuliaHLS presented at LATTE '25.
+- **FOSDEM**: Open-source hardware track. NPU generation talk at FOSDEM 2026.
+- **Hot Chips**: SiFive/Microsoft CIRCT tutorial (2022)
+- **DAC**: ScaleHLS (2022), various MLIR-related papers
+- **C4ML**: PyTorch-to-Calyx (2026)
+- **FPGA Horizons London 2025**: Talk on MLIR/CIRCT reshaping FPGA compiler tools
 
-The three core SVA constructs map directly to CIRCT operations:
+### Maturity Assessment (as of early 2026)
 
-| SVA Construct | Purpose | CIRCT Equivalent |
-|---------------|---------|-----------------|
-| `assert property(...)` | Check property holds | `verif.assert` + `ltl.*` |
-| `assume property(...)` | Constrain verification environment | `verif.assume` + `ltl.*` |
-| `cover property(...)` | Track property exercised | `verif.cover` + `ltl.*` |
+**Production-ready components**:
+- `firtool` (FIRRTL compiler) — actively used by SiFive and the Chipyard ecosystem
+- MLIR core infrastructure — widely deployed across industry
+- `hw`/`comb`/`seq` core dialects — stable, well-tested
 
-CIRCT's representation has the advantage of being tool-independent -- the same assertions can be:
-- Checked by `circt-bmc` (formal bounded model checking)
-- Exported to SystemVerilog for commercial tools
-- Used by Arcilator during simulation
-- Exported to BTOR2 for model checking competitions
+**Research-to-production transition**:
+- Arcilator — competitive with Verilator, actively developed at SiFive
+- Calyx — moving from research to broader adoption via PyTorch flow
+- ESI — Microsoft-driven, evolving rapidly
 
-### Recent Breakthrough: Open-Source UVM Runtime (2026)
+**Active research**:
+- Dynamatic — strong academic results, not yet industry-adopted
+- ScaleHLS — impressive benchmarks, backend integration ongoing
+- Moore dialect (SystemVerilog frontend) — 73% compliance, needs more coverage
+- Formal verification — demonstrated on OpenTitan, tooling maturing
 
-In January-February 2026, Normal Computing used AI agents to land 2,968 commits on a CIRCT fork, adding:
-- Full 4-state event-driven simulator
-- VPI/cocotb integration
-- **UVM runtime support**
-- Bounded model checking and logic equivalence checking
-- Mutation testing
+**Key limitation**: The CIRCT library's capabilities were identified as the main limiting factor in recent HLS work (JuliaHLS, 2025), particularly around memory modeling, cosimulation, and coverage of advanced SystemVerilog features. The ecosystem is rapidly expanding but not yet a complete replacement for commercial EDA tools.
 
-They successfully ran Mirafra's open-source AVIPs (Advanced Verification IP) -- complete UVM testbenches for standard bus protocols -- end to end. No other open-source simulator had previously been able to even compile these testbenches.
+## The Open-Source Hardware Tooling Landscape
 
-### Simulator-Independent Coverage
+CIRCT/MLIR sits at the center of a broader open-source hardware ecosystem:
 
-Research from Kevin Laeufer (ASPLOS 2023) demonstrated simulator-independent coverage for RTL hardware languages. Rather than coverage being tied to a specific simulator's implementation, coverage metrics are defined at the IR level and can be computed by any compliant tool. This aligns with CIRCT's philosophy of tool-independent representations.
+```
+  Design Languages          Compilation              Synthesis & PnR
+  ─────────────────        ──────────────           ─────────────────
+  Chisel ──────────┐       ┌──────────┐            ┌───────────────┐
+  SystemVerilog ───┼──────>│  CIRCT   │───────────>│ Yosys         │
+  Calyx (HLS) ─────┤       │  (MLIR)  │  Verilog  │ (synthesis)   │
+  Dynamatic (HLS) ─┤       └──────────┘            └───────┬───────┘
+  Julia (HLS) ─────┘              │                        │
+                           Arcilator (sim)          ┌──────┴────────┐
+                           circt-bmc (verify)       │ NextPNR       │
+                           circt-lec (equiv)        │ (place&route) │
+                                                    └───────────────┘
+                                                           │
+                                                    ┌──────┴────────┐
+                                                    │ FPGA Bitstream│
+                                                    │ or ASIC GDSII │
+                                                    └───────────────┘
+```
 
----
+The Yosys/NextPNR open-source synthesis and place-and-route tools complete the picture for a fully open-source FPGA design flow. CIRCT handles the "front half" (design capture, optimization, verification, code generation) while Yosys/NextPNR handle the "back half" (synthesis, mapping, placement, routing).
 
-## MLIR-Based Equivalence Checking and Property Verification Tools
+## References
 
-### circt-lec
-
-CIRCT's logic equivalence checker, using Z3 as the SMT backend. Can compare any two modules in the CIRCT core representation. Has been validated against real designs including Ibex's ALU.
-
-### K-CIRCT
-
-Provides executable formal semantics for CIRCT using the K framework. Enables simulation, symbolic interpretation, and equivalence checking derived from the same semantic specification. Successfully simulated a RISC-V design (mini-riscv).
-
-### BTOR2MLIR
-
-Bridges the hardware model checking world (BTOR2/HWMCC) with MLIR/LLVM, enabling SeaHorn's BMC engine to verify hardware properties expressed as BTOR2 circuits.
-
-### First-Class Verification Dialects (PLDI 2025)
-
-Makes formal semantics a first-class MLIR citizen. Found 5 miscompilation bugs in upstream MLIR and verified transfer functions that detect 36.6% more known bits than the upstream implementation.
-
----
-
-## The Broader Open-Source Hardware Verification Landscape
-
-Beyond CIRCT, the open-source hardware verification ecosystem includes:
-
-| Tool | Category | Relationship to CIRCT |
-|------|----------|----------------------|
-| **Verilator** | Cycle-accurate simulator | Competitor/complement; CIRCT can generate Verilog for Verilator |
-| **Icarus Verilog** | Event-driven simulator | Competitor; lower SV compliance than CIRCT |
-| **Yosys** | Synthesis framework | Can export to BTOR2 for formal verification |
-| **SymbiYosys** | Formal verification frontend | Uses Yosys + Z3/ABC; CIRCT alternative |
-| **cocotb** | Python verification framework | Integrates with CIRCT via VPI |
-| **Chiseltest** | Chisel testing framework | Uses CIRCT's firtool as backend |
-| **sv-tests** | SV compliance suite | Used to benchmark CIRCT's SV support |
-
-CIRCT's key differentiator is the unified IR approach: simulation, formal verification, synthesis, and code generation all share the same intermediate representation, enabling optimizations and analyses that cross traditional tool boundaries.
+- [SiFive chisel-circt](https://github.com/sifive/chisel-circt)
+- [Zaozi: Reinvent Chisel in Scala 3 (LATTE '25)](https://capra.cs.cornell.edu/latte25/paper/12.pdf)
+- [Hot Chips 2022: CIRCT Tutorial](https://www.hc34.hotchips.org/assets/program/tutorials/MLIR/HC2022.SiFive-MSFT.LenharthDemme.v1.pdf)
+- [MLIR Users Page](https://mlir.llvm.org/users/)
+- [CIRCT Project](https://circt.llvm.org/)
+- [ESI Dialect](https://circt.llvm.org/docs/Dialects/ESI/)
+- [Microsoft ESI GitHub](https://github.com/microsoft/Elastic-Silicon-Interconnect)
+- [Amaranth HDL](https://github.com/amaranth-lang/amaranth)
+- [FPGA Horizons London 2025](https://www.fpgahorizons.com/london-25/london-25-talks/)
+- [FOSDEM 2026: NPU Generation from Linalg](https://fosdem.org/2026/schedule/event/GTQRZE-programmable-npu-generation-from-linalg-mlir-circt/)
+- [ARIES FPGA '25](https://www.csl.cornell.edu/~zhiruz/pdfs/aries-fpga2025.pdf)
