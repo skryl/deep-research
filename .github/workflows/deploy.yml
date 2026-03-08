@@ -20,16 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          fetch-depth: 0
 
-      - uses: peaceiris/actions-hugo@v3
+      - uses: actions/setup-node@v4
         with:
-          hugo-version: "latest"
-          extended: true
+          node-version: 22
 
-      - run: bash scripts/build-content.sh
+      - run: npm ci
 
-      - run: hugo --minify
+      - run: npx quartz build
 
       - uses: actions/upload-pages-artifact@v3
         with:
