@@ -29,12 +29,12 @@ The project emerged from collaborations between SiFive, Google, Microsoft, and a
 
 | File | Description |
 |------|-------------|
-| [architecture.md](architecture.md) | MLIR foundations, CIRCT project structure, and the progressive lowering pipeline |
-| [dialects.md](dialects.md) | All 30+ MLIR dialects in CIRCT — purpose, operations, and IR examples |
-| [tools.md](tools.md) | Key tools: firtool, circt-opt, circt-translate, arcilator, circt-bmc/lec |
-| [simulation.md](simulation.md) | MLIR-based simulation: arc dialect, Arcilator, ESSENT, Khronos, Parendi |
-| [verification.md](verification.md) | Formal verification: verif/ltl/smt dialects, bounded model checking, equivalence checking |
-| [hls.md](hls.md) | High-level synthesis: Calyx, Dynamatic, ScaleHLS, PipelineC, hls4ml, and domain-specific compilers |
-| [chisel-firrtl.md](chisel-firrtl.md) | Chisel, FIRRTL, and the SFC-to-CIRCT migration |
-| [ecosystem.md](ecosystem.md) | HDL integration (Chisel, Amaranth, SpinalHDL), ESI dialect, FPGA tooling, and real-world adoption |
-| [community.md](community.md) | Contributors, governance, and organizational involvement |
+| [architecture](research/2026/mlir-hardware/architecture) | MLIR foundations, CIRCT project structure, and the progressive lowering pipeline |
+| [dialects](research/2026/mlir-hardware/dialects) | All 30+ MLIR dialects in CIRCT — purpose, operations, and IR examples |
+| [tools](research/2026/mlir-hardware/tools) | Key tools: firtool, circt-opt, circt-translate, arcilator, circt-bmc/lec |
+| [simulation](research/2026/mlir-hardware/simulation) | MLIR-based simulation: arc dialect, Arcilator, ESSENT, Khronos, Parendi |
+| [verification](research/2026/mlir-hardware/verification) | Formal verification: verif/ltl/smt dialects, bounded model checking, equivalence checking |
+| [hls](research/2026/mlir-hardware/hls) | High-level synthesis: Calyx, Dynamatic, ScaleHLS, PipelineC, hls4ml, and domain-specific compilers |
+| [chisel-firrtl](research/2026/mlir-hardware/chisel-firrtl) | Chisel, FIRRTL, and the SFC-to-CIRCT migration |
+| [ecosystem](research/2026/mlir-hardware/ecosystem) | HDL integration (Chisel, Amaranth, SpinalHDL), ESI dialect, FPGA tooling, and real-world adoption |
+| [community](research/2026/mlir-hardware/community) | Contributors, governance, and organizational involvement |

@@ -20,8 +20,8 @@ Claude Code is Anthropic's official command-line interface that brings Claude di
 
 | File | Description |
 |------|-------------|
-| [architecture.md](architecture.md) | Agentic loop, tool system, and context management |
-| [features.md](features.md) | Core features: slash commands, memory, permissions |
-| [configuration.md](configuration.md) | Settings, CLAUDE.md, hooks, and MCP servers |
-| [workflows.md](workflows.md) | Common usage patterns and best practices |
-| [sdk-and-automation.md](sdk-and-automation.md) | Claude Code SDK, headless mode, and CI integration |
+| [architecture](research/2026/claude-code/architecture) | Agentic loop, tool system, and context management |
+| [features](research/2026/claude-code/features) | Core features: slash commands, memory, permissions |
+| [configuration](research/2026/claude-code/configuration) | Settings, CLAUDE.md, hooks, and MCP servers |
+| [workflows](research/2026/claude-code/workflows) | Common usage patterns and best practices |
+| [sdk-and-automation](research/2026/claude-code/sdk-and-automation) | Claude Code SDK, headless mode, and CI integration |

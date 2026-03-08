@@ -8,6 +8,7 @@
     "quartz": "./quartz/bootstrap-cli.mjs",
     "build": "npx quartz build",
     "serve": "npx quartz build --serve",
+    "test": "npx quartz build && node --test tests/integration.test.mjs",
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write"
   },

@@ -192,7 +192,7 @@ Compiles hardware designs to native simulation binaries through the Arc dialect.
 arcilator design.mlir -o sim_binary
 ```
 
-See [simulation.md](simulation.md) for detailed information on the Arc dialect and arcilator performance.
+See [simulation.md](research/2026/mlir-hardware/simulation) for detailed information on the Arc dialect and arcilator performance.
 
 ## hlstool — High-Level Synthesis Driver
 
