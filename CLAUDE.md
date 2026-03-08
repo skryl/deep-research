@@ -10,9 +10,11 @@ sidebar, graph view, backlinks, table of contents, search, and dark mode.
 content/
   index.md                 # Homepage
   research/
-    <topic>/
-      index.md             # Topic overview (from README.md)
-      *.md                 # Sub-topic pages
+    <year>/
+      index.md             # Year landing page
+      <topic>/
+        index.md           # Topic overview (from README.md)
+        *.md               # Sub-topic pages
 2026/
   <yymmdd>-<topic>/
     README.md              # Source research files (kept as archive)
@@ -25,7 +27,7 @@ quartz.layout.ts           # Page layout (sidebar, graph, TOC, etc.)
 
 ## Adding a New Research Topic
 
-1. Create content files directly in `content/research/<topic>/`:
+1. Create content files in `content/research/<year>/<topic>/`:
    - `index.md` — topic overview with frontmatter:
      ```markdown
      ---
