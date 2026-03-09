@@ -6,7 +6,7 @@ weight: 1
 
 ## Slash Commands
 
-Type `/` in a session to see available commands:
+Type `/` in a session to see available commands[^1]:
 
 | Command | Description |
 |---------|-------------|
@@ -31,7 +31,7 @@ Type `/` in a session to see available commands:
 
 **Bundled skills** (invoke like slash commands): `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`
 
-### Custom Slash Commands (Skills)
+### Custom Slash Commands (Skills)[^2]
 
 Users can create custom commands by placing markdown files in:
 - `.claude/skills/<name>/SKILL.md` — Project-scoped (shared via git)
@@ -62,7 +62,7 @@ Invoke with `/fix-issue 123`.
 
 ## Permissions Model
 
-Claude Code has a layered permissions system controlling what actions require user approval.
+Claude Code has a layered permissions system[^3] controlling what actions require user approval.
 
 ### Permission Modes
 
@@ -125,7 +125,7 @@ Configured in settings files with allow/deny/ask lists:
 
 ### CLAUDE.md Files (Explicit Memory)
 
-CLAUDE.md files serve as persistent instructions loaded automatically at the start of each session:
+CLAUDE.md files serve as persistent instructions[^4] loaded automatically at the start of each session:
 
 | Location | Scope | Use Case |
 |----------|-------|----------|
@@ -168,7 +168,7 @@ Claude automatically saves learnings across sessions without explicit user actio
 - **Cross-branch:** When you switch git branches, files update but conversation history stays.
 - **Parallel:** Use git worktrees to run parallel Claude Code sessions in separate directories.
 
-## IDE Integration
+## IDE Integration[^5]
 
 ### VS Code
 - Official extension from the Marketplace (search "Claude Code")
@@ -216,6 +216,14 @@ claude --chrome
 ```
 
 Enables browser control for web testing, form filling, and debugging web applications.
+
+## Footnotes
+
+[^1]: [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/cli-usage#slash-commands)
+[^2]: [Claude Code Skills](https://docs.anthropic.com/en/docs/claude-code/skills)
+[^3]: [Claude Code Permissions](https://docs.anthropic.com/en/docs/claude-code/security#permissions)
+[^4]: [Claude Code Memory (CLAUDE.md)](https://docs.anthropic.com/en/docs/claude-code/memory)
+[^5]: [Claude Code IDE Integrations](https://docs.anthropic.com/en/docs/claude-code/ide-integrations)
 
 ## References
 

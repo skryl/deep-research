@@ -6,7 +6,7 @@ weight: 5
 
 ## Headless Mode
 
-Claude Code can run non-interactively for scripting and automation:
+Claude Code can run non-interactively[^1] for scripting and automation:
 
 ```bash
 # Simple one-shot prompt
@@ -26,7 +26,7 @@ claude -p "fix type errors" --max-turns 10
 
 | Flag | Purpose |
 |------|---------|
-| `-p` / `--print` | Run in non-interactive (headless) mode |
+| `-p` / `--print` | Run in non-interactive (headless) mode[^6] |
 | `--output-format` | Output format: `text`, `json`, `stream-json` |
 | `--max-turns` | Limit the number of agentic loop iterations |
 | `--model` | Specify model to use |
@@ -40,7 +40,7 @@ claude -p "fix type errors" --max-turns 10
 
 ### GitHub Actions
 
-Anthropic provides an official GitHub Action:
+Anthropic provides an official GitHub Action[^4]:
 
 ```yaml
 - name: AI Code Review
@@ -70,9 +70,9 @@ claude -p "run tests and fix any failures" \
 - **Translate** strings and content files
 - **Security scanning** with domain-specific context
 
-## Claude Code SDK (TypeScript)
+## Claude Code SDK (TypeScript)[^2]
 
-The SDK allows programmatic control of Claude Code from Node.js applications:
+The SDK[^3] allows programmatic control of Claude Code from Node.js applications:
 
 ```typescript
 import { claude } from "@anthropic-ai/claude-code";
@@ -148,7 +148,7 @@ while (!approved) {
 }
 ```
 
-## Custom Tooling via MCP
+## Custom Tooling via MCP[^5]
 
 For domain-specific automation, expose custom tools via MCP servers that Claude can invoke like built-in tools:
 
@@ -199,6 +199,15 @@ claude auth login --sso            # Enterprise SSO
 - Anthropic Console (API key with credits)
 - Amazon Bedrock (`CLAUDE_CODE_USE_BEDROCK=1`)
 - Google Vertex AI (`CLAUDE_CODE_USE_VERTEX=1`)
+
+## Footnotes
+
+[^1]: [Claude Code Headless Mode](https://docs.anthropic.com/en/docs/claude-code/cli-usage#headless-mode)
+[^2]: [Claude Code SDK Documentation](https://docs.anthropic.com/en/docs/claude-code/sdk)
+[^3]: [Claude Code SDK (npm)](https://www.npmjs.com/package/@anthropic-ai/claude-code)
+[^4]: [Claude Code GitHub Action](https://github.com/anthropics/claude-code-action)
+[^5]: [Model Context Protocol SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+[^6]: [Claude Code CLI Usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
 
 ## References
 

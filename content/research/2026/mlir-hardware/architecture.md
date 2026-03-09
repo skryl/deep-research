@@ -6,7 +6,7 @@ weight: 1
 
 ## MLIR as a Hardware Compiler Framework
 
-MLIR (Multi-Level Intermediate Representation) was designed by Google to solve the "N x M" problem in compilers: N source languages targeting M hardware backends, each requiring a custom compiler. MLIR introduces a common infrastructure where multiple domain-specific IRs (called **dialects**) coexist and interoperate within a single framework.
+MLIR (Multi-Level Intermediate Representation)[^1] was designed by Google to solve the "N x M" problem in compilers: N source languages targeting M hardware backends, each requiring a custom compiler. MLIR introduces a common infrastructure where multiple domain-specific IRs (called **dialects**) coexist and interoperate within a single framework.
 
 For hardware design, this is transformative. The EDA industry historically relied on Verilog and VHDL as both design languages and interchange formats — despite their well-documented limitations:
 
@@ -37,7 +37,7 @@ MLIR provides the infrastructure to solve all four: dialects encode domain-speci
 
 ## The CIRCT Project
 
-CIRCT (Circuit IR Compilers and Tools) is an LLVM incubator project that applies MLIR to hardware design tooling. Started around 2020 through collaboration between SiFive, Google, and academic groups, it now lives in the `llvm/circt` GitHub repository and follows all LLVM governance policies.
+CIRCT (Circuit IR Compilers and Tools)[^2] is an LLVM incubator project that applies MLIR to hardware design tooling. Started around 2020 through collaboration between SiFive, Google, and academic groups, it now lives in the `llvm/circt` GitHub repository[^3] and follows all LLVM governance policies.
 
 ### Project Goals
 
@@ -116,7 +116,7 @@ A key MLIR feature is that operations from different dialects can coexist in the
 
 ### firtool
 
-The primary FIRRTL compiler, replacing the legacy Scala FIRRTL Compiler (SFC). Accepts FIRRTL input (from Chisel or other frontends) and produces SystemVerilog output through the full CIRCT lowering pipeline. Provides 10-100x speedup over SFC for large designs due to C++ implementation and MLIR's efficient data structures.
+The primary FIRRTL compiler, replacing the legacy Scala FIRRTL Compiler (SFC)[^4]. Accepts FIRRTL input (from Chisel or other frontends) and produces SystemVerilog output through the full CIRCT lowering pipeline. Provides 10-100x speedup over SFC for large designs due to C++ implementation and MLIR's efficient data structures.
 
 ```bash
 # Compile Chisel-generated FIRRTL to SystemVerilog
@@ -150,7 +150,7 @@ Driver for HLS compilation flows, integrating scheduling, pipelining, and loweri
 
 ### Declarative Dialect Definitions
 
-CIRCT uses MLIR's ODS (Operation Definition Specification) tablegen to declare operations:
+CIRCT uses MLIR's ODS (Operation Definition Specification)[^5] tablegen to declare operations:
 
 ```tablegen
 def CombAddOp : CombBinOp<"add", [Commutative]> {
@@ -170,6 +170,14 @@ Every operation in CIRCT has automatically-generated and hand-written verifiers 
 ### Location Tracking
 
 MLIR operations carry source location information through every transformation. When CIRCT emits a SystemVerilog error or warning, it can point back to the original Chisel/FIRRTL source line — not the generated Verilog. This is a significant improvement over traditional flows where generated RTL errors are nearly impossible to trace.
+
+## Footnotes
+
+[^1]: [MLIR Documentation](https://mlir.llvm.org/)
+[^2]: [CIRCT Project](https://circt.llvm.org/)
+[^3]: [CIRCT GitHub Repository](https://github.com/llvm/circt)
+[^4]: [FIRRTL Dialect Rationale](https://circt.llvm.org/docs/Dialects/FIRRTL/RationaleFIRRTL/)
+[^5]: [MLIR Language Reference](https://mlir.llvm.org/docs/LangRef/)
 
 ## References
 

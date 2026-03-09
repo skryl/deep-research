@@ -40,7 +40,7 @@ The `smt` dialect interfaces with SMT solvers (Z3, Bitwuzla) for automated reaso
 
 ### First-Class Verification Dialects (PLDI 2025)
 
-A recent paper presented at PLDI 2025 ("First-Class Verification Dialects for MLIR") formalizes the approach of embedding verification semantics directly in MLIR dialects, demonstrating that the type system and pass infrastructure of MLIR are well-suited for expressing and checking hardware verification properties.
+A recent paper presented at PLDI 2025[^1] ("First-Class Verification Dialects for MLIR") formalizes the approach of embedding verification semantics directly in MLIR dialects, demonstrating that the type system and pass infrastructure of MLIR are well-suited for expressing and checking hardware verification properties.
 
 ## Verification Tools
 
@@ -58,11 +58,11 @@ Proves that two implementations are functionally equivalent. Primary use cases:
 
 ### Practical Application: OpenTitan
 
-CIRCT's formal verification tools have been validated against OpenTitan, an open-source silicon root-of-trust design. This demonstrates applicability to real-world, production-quality hardware designs.
+CIRCT's formal verification tools have been validated against OpenTitan[^3], an open-source silicon root-of-trust design. This demonstrates applicability to real-world, production-quality hardware designs.
 
 ## K-CIRCT: Formal Semantics for CIRCT
 
-K-CIRCT (2024) provides the first formal semantics for CIRCT hardware IRs using the K framework. Key contributions:
+K-CIRCT[^2] (2024) provides the first formal semantics for CIRCT hardware IRs using the K framework. Key contributions:
 
 - **Simulation capability**: Can simulate complex hardware designs including RISC-V cores
 - **Layered semantics**: A composable mechanism for defining dialect semantics, handling the cross-dialect interactions that arise when operations from different CIRCT dialects coexist
@@ -77,6 +77,12 @@ For HLS flows, verification is critical because the gap between the source progr
 1. **Cosimulation**: Dynamatic provides MLIR-based C-to-RTL cosimulation, comparing the hardware's behavior against the original C program cycle by cycle
 2. **Equivalence checking**: JuliaHLS plans to use CIRCT's `circt-lec` to verify that lowering passes preserve functional correctness
 3. **Fuzzing**: Hardware.jl proposes using fuzzers to automatically generate synthesizable designs and check equivalence across lowering stages
+
+## Footnotes
+
+[^1]: [First-Class Verification Dialects for MLIR (PLDI 2025)](https://users.cs.utah.edu/~regehr/papers/pldi25.pdf)
+[^2]: [K-CIRCT: Formal Semantics for CIRCT (arXiv:2404.18756)](https://arxiv.org/html/2404.18756v1)
+[^3]: [Formal Verification of Hardware using MLIR (ETH Zurich Master Thesis)](https://www.cs.princeton.edu/~ad4048/pdfs/formal-verification-of-hardware-using-mlir.pdf)
 
 ## References
 

@@ -5,9 +5,9 @@ date: 2026-03-08
 
 ## Overview
 
-The CIRCT (Circuit IR Compilers and Tools) project applies LLVM and MLIR's modular compiler infrastructure to hardware design tooling. Rather than treating Verilog or VHDL as interchange formats — with all their well-known limitations around type safety, location tracking, and composability — CIRCT defines a layered set of MLIR dialects that capture hardware semantics at multiple abstraction levels. This enables the same progressive-lowering philosophy that made LLVM successful for software compilers: high-level design intent is gradually refined through well-defined intermediate representations down to synthesizable RTL.
+The CIRCT (Circuit IR Compilers and Tools) project[^1] applies LLVM and MLIR's modular compiler infrastructure to hardware design tooling. Rather than treating Verilog or VHDL as interchange formats — with all their well-known limitations around type safety, location tracking, and composability — CIRCT defines a layered set of MLIR dialects that capture hardware semantics at multiple abstraction levels. This enables the same progressive-lowering philosophy that made LLVM successful for software compilers: high-level design intent is gradually refined through well-defined intermediate representations down to synthesizable RTL.
 
-The project emerged from collaborations between SiFive, Google, Microsoft, and academic groups (Cornell, EPFL, ETH Zurich, UIUC), and now lives under the LLVM umbrella. It serves as the backend for Chisel/FIRRTL (via `firtool`), provides MLIR-based simulation infrastructure (Arcilator), integrates formal verification tools (`circt-bmc`, `circt-lec`), and supports multiple high-level synthesis flows including Calyx, Dynamatic, and ScaleHLS. The ESI (Elastic Silicon Interconnect) dialect addresses SoC communication with typed, latency-insensitive interconnect.
+The project emerged from collaborations between SiFive, Google, Microsoft, and academic groups (Cornell, EPFL, ETH Zurich, UIUC), and now lives under the LLVM umbrella. It serves as the backend for Chisel/FIRRTL (via `firtool`)[^2], provides MLIR-based simulation infrastructure (Arcilator), integrates formal verification tools (`circt-bmc`, `circt-lec`), and supports multiple high-level synthesis flows including Calyx[^3], Dynamatic[^4], and ScaleHLS[^5]. The ESI (Elastic Silicon Interconnect) dialect addresses SoC communication with typed, latency-insensitive interconnect.
 
 ## Key Findings
 
@@ -22,7 +22,7 @@ The project emerged from collaborations between SiFive, Google, Microsoft, and a
 - **ESI (Elastic Silicon Interconnect)** from Microsoft provides typed, latency-insensitive channels that abstract away signaling protocol details (AXI, Avalon-MM).
 - **Arcilator** compiles hardware to native code via LLVM for cycle-accurate simulation, matching Verilator performance without Verilog roundtrip.
 - **Formal verification** is integrated through `verif`, `ltl`, and `smt` dialects — validated against real designs like OpenTitan.
-- **Real-world adoption**: SiFive uses CIRCT in production for RISC-V design; Google, Microsoft, AMD, Apple, Intel, NVIDIA, and ARM all use MLIR; the Chipyard SoC framework builds on CIRCT.
+- **Real-world adoption**: SiFive uses CIRCT in production for RISC-V design[^6]; Google, Microsoft, AMD, Apple, Intel, NVIDIA, and ARM all use MLIR; the Chipyard SoC framework builds on CIRCT.
 - **hls4ml** (CERN) dominates ultra-low-latency ML inference on FPGAs, with the da4ml extension (2025) connecting to MLIR/LLVM via Numba.
 
 ## Contents
@@ -38,6 +38,15 @@ The project emerged from collaborations between SiFive, Google, Microsoft, and a
 | [chisel-firrtl](research/2026/mlir-hardware/chisel-firrtl) | Chisel, FIRRTL, and the SFC-to-CIRCT migration |
 | [ecosystem](research/2026/mlir-hardware/ecosystem) | HDL integration (Chisel, Amaranth, SpinalHDL), ESI dialect, FPGA tooling, and real-world adoption |
 | [community](research/2026/mlir-hardware/community) | Contributors, governance, and organizational involvement |
+
+## Footnotes
+
+[^1]: [CIRCT Project](https://circt.llvm.org/)
+[^2]: [CIRCT GitHub Repository](https://github.com/llvm/circt)
+[^3]: [Calyx Project](https://calyxir.org/)
+[^4]: [Dynamatic Website](https://dynamatic.epfl.ch/)
+[^5]: [ScaleHLS GitHub](https://github.com/UIUC-ChenLab/scalehls)
+[^6]: [MLIR Users Page](https://mlir.llvm.org/users/)
 
 ## References
 

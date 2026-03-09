@@ -6,7 +6,7 @@ weight: 3
 
 ## Settings File Hierarchy
 
-Claude Code uses a hierarchy of JSON settings files. Higher precedence overrides lower:
+Claude Code uses a hierarchy of JSON settings files[^1]. Higher precedence overrides lower:
 
 | Priority | File | Scope | Managed By |
 |----------|------|-------|------------|
@@ -23,7 +23,7 @@ Claude Code uses a hierarchy of JSON settings files. Higher precedence overrides
 
 ## Key Settings
 
-### Permissions
+### Permissions[^4]
 ```json
 {
   "permissions": {
@@ -112,7 +112,7 @@ Claude Code uses a hierarchy of JSON settings files. Higher precedence overrides
 
 ## Hooks
 
-Hooks are user-defined commands that execute at specific points in the agentic loop.
+Hooks are user-defined commands[^2] that execute at specific points in the agentic loop.
 
 ### Hook Events
 
@@ -199,7 +199,7 @@ osascript -e 'display notification "Claude needs input" with title "Claude Code"
 
 ## MCP Servers
 
-The **Model Context Protocol (MCP)** connects Claude Code to external tools and data sources via a standardized protocol.
+The **Model Context Protocol (MCP)**[^3] connects Claude Code to external tools and data sources via a standardized protocol.
 
 ### Transport Types
 
@@ -250,7 +250,7 @@ Precedence: Local > Project > User (when same name exists).
 
 ### Tool Search
 
-When many MCP servers are connected (tool definitions > 10% of context), **Tool Search** activates automatically — deferring tool loading until needed, keeping context lean.
+When many MCP servers are connected (tool definitions > 10% of context), **Tool Search** activates automatically — deferring tool loading until needed, keeping context lean[^5].
 
 ### Management Commands
 
@@ -277,6 +277,14 @@ claude mcp remove github           # Remove server
 - **macOS/Windows**: System keychain
 - **Linux**: Credentials file
 - Rotate tokens in Anthropic Console account settings
+
+## Footnotes
+
+[^1]: [Claude Code Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+[^2]: [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+[^3]: [Claude Code MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+[^4]: [Claude Code Permissions](https://docs.anthropic.com/en/docs/claude-code/security#permissions)
+[^5]: [MCP Server Registry](https://github.com/modelcontextprotocol/servers)
 
 ## References
 

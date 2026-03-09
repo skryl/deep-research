@@ -8,7 +8,7 @@ CIRCT provides native simulation capabilities through the `arc` dialect and the 
 
 ## Arcilator: Cycle-Accurate Simulation via MLIR
 
-Arcilator is CIRCT's cycle-accurate hardware simulator. Rather than exporting designs to Verilog and using Verilator or a commercial simulator, Arcilator compiles hardware directly from MLIR to native code via LLVM.
+Arcilator is CIRCT's cycle-accurate hardware simulator[^1]. Rather than exporting designs to Verilog and using Verilator or a commercial simulator, Arcilator compiles hardware directly from MLIR to native code via LLVM.
 
 ### Architecture
 
@@ -25,7 +25,7 @@ By modeling hardware as pure functions over state, Arcilator can leverage LLVM's
 
 ### Performance
 
-Arcilator delivers performance comparable to Verilator for cycle-accurate simulation. The `circt/arc-tests` repository provides benchmarks comparing the two, using the same hardware designs with both simulation backends.
+Arcilator delivers performance comparable to Verilator for cycle-accurate simulation. The `circt/arc-tests` repository[^2] provides benchmarks comparing the two, using the same hardware designs with both simulation backends.
 
 ### Assumptions and Limitations
 
@@ -36,7 +36,7 @@ Like Verilator, Arcilator assumes **synchronous, edge-triggered** semantics — 
 
 ### Waveform Output
 
-CIRCT is working toward a common waveform writer library supporting VCD, FST, and other formats. This would be shared across Arcilator, `circt-bmc`, and `circt-lec` (Google Summer of Code 2025 project).
+CIRCT is working toward a common waveform writer library supporting VCD, FST, and other formats. This would be shared across Arcilator, `circt-bmc`, and `circt-lec` (Google Summer of Code 2025 project[^4]).
 
 ### Who Develops It
 
@@ -44,7 +44,7 @@ Martin Erhart, a Senior Engineer at SiFive (MSc from ETH Zurich), has been a pri
 
 ## Normal Computing's Event-Driven Simulator (2026)
 
-In early 2026, Normal Computing used AI agents to rapidly extend CIRCT with a full **event-driven simulator**, landing 2,968 commits on a CIRCT fork over 43 days. The additions include:
+In early 2026, Normal Computing[^3] used AI agents to rapidly extend CIRCT with a full **event-driven simulator**, landing 2,968 commits on a CIRCT fork over 43 days. The additions include:
 
 - **Event-driven scheduler**: Supports continuous assignments with propagation delays, not just edge-triggered logic
 - **VPI/cocotb integration**: Python-based testbench support
@@ -79,6 +79,13 @@ VCS (Synopsys), Xcelium (Cadence), and Questa (Siemens) remain the standard for 
 ## Cosimulation with ESI
 
 The ESI (Elastic Silicon Interconnect) dialect provides cosimulation endpoints, enabling hardware-software cosimulation where the hardware side runs in Arcilator while software communicates through ESI's typed channels. This is particularly valuable for verifying accelerator designs where the hardware must interact with host software.
+
+## Footnotes
+
+[^1]: [Arcilator LLVM Dev Meeting Talk (2023)](https://llvm.org/devmtg/2023-10/slides/techtalks/Erhart-Arcilator-FastAndCycleAccurateHardwareSimulationInCIRCT.pdf)
+[^2]: [Arc Tests Repository](https://github.com/circt/arc-tests)
+[^3]: [Normal Computing Blog: Building an Open-Source Simulator](https://normalcomputing.com/blog/building-an-open-source-verilog-simulator-with-ai-580k-lines-in-43-days)
+[^4]: [GSoC 2025 CIRCT Ideas](https://fossi-foundation.org/gsoc/gsoc25-ideas)
 
 ## References
 
