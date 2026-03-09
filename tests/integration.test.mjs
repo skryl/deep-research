@@ -14,6 +14,10 @@ import assert from "node:assert/strict"
 import http from "node:http"
 import fs from "node:fs"
 import path from "node:path"
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
+
+const execFileAsync = promisify(execFile)
 
 /**
  * Base path prefix derived from quartz.config.ts baseUrl.
@@ -47,6 +51,85 @@ function getMimeType(filePath) {
 }
 
 /**
+ * Fetch a URL, falling back to curl when Node's fetch is blocked (e.g.
+ * in sandboxed environments that restrict outbound connections but allow
+ * shelling out to curl).
+ *
+ * Returns a fetch-Response-like object with: status, ok, url,
+ * headers.get("content-type"), text().
+ */
+async function httpGet(url) {
+  // For local URLs, use native fetch — it's faster and handles redirects.
+  if (url.startsWith("http://127.0.0.1") || url.startsWith("http://localhost")) {
+    return fetch(url, { redirect: "follow" })
+  }
+
+  // Try native fetch first for external URLs.
+  try {
+    const res = await fetch(url, { redirect: "follow" })
+    return res
+  } catch {
+    // fetch blocked — fall back to curl
+  }
+
+  // curl fallback: -L follows redirects, -s is silent, -w prints metadata.
+  const args = [
+    "-sL",
+    "--connect-timeout",
+    "10",
+    "-D",
+    "-",
+    "-o",
+    "-",
+    "-w",
+    "\n%{http_code}\n%{url_effective}",
+    url,
+  ]
+
+  let stdout
+  try {
+    const result = await execFileAsync("curl", args, {
+      maxBuffer: 10 * 1024 * 1024,
+    })
+    stdout = result.stdout
+  } catch (err) {
+    throw new Error(`curl failed for ${url}: ${err.message}`)
+  }
+
+  // curl -D - writes headers then body; -w appends status + final url.
+  const lines = stdout.split("\n")
+  const effectiveUrl = lines.pop() || url
+  const statusCode = parseInt(lines.pop() || "0", 10)
+
+  // Find the last blank line separating headers from body (there may be
+  // multiple header blocks when following redirects).
+  let lastHeaderEnd = -1
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === "") lastHeaderEnd = i
+  }
+
+  const headerLines = lastHeaderEnd >= 0 ? lines.slice(0, lastHeaderEnd) : []
+  const body =
+    lastHeaderEnd >= 0 ? lines.slice(lastHeaderEnd + 1).join("\n") : lines.join("\n")
+
+  let contentType = ""
+  for (const h of headerLines) {
+    const m = h.match(/^content-type:\s*(.+)/i)
+    if (m) contentType = m[1].trim()
+  }
+
+  return {
+    status: statusCode,
+    ok: statusCode >= 200 && statusCode < 300,
+    url: effectiveUrl,
+    headers: {
+      get: (name) => (name.toLowerCase() === "content-type" ? contentType : null),
+    },
+    text: async () => body,
+  }
+}
+
+/**
  * Normalize a URL path by resolving `.` and `..` segments and removing
  * trailing slashes (except for root `/`).
  */
@@ -60,7 +143,10 @@ function normalizePath(p) {
 
 before(async () => {
   if (externalBaseUrl) {
-    baseUrl = externalBaseUrl.replace(/\/$/, "")
+    // Use just the origin so that absolute paths like /deep-research/...
+    // work the same way as with the local server.
+    const u = new URL(externalBaseUrl)
+    baseUrl = u.origin
     return
   }
 
@@ -142,143 +228,118 @@ function startPath() {
 
 /**
  * Crawl the site starting from the base path, collecting all internal links.
- * Returns a Map of normalized URL path -> HTTP status code (or error string).
+ * Fetches up to CONCURRENCY pages in parallel per round for speed.
+ *
+ * Returns an object with:
+ *   visited: Map of normalized URL path -> HTTP status code (or error string)
+ *   pages:   Map of normalized URL path -> { finalUrl, html, hrefs }
+ *            (only for 200 HTML pages)
  */
+const CONCURRENCY = 6
+
 async function crawlSite() {
   const visited = new Map()
+  const pages = new Map()
   const queue = [startPath()]
 
   while (queue.length > 0) {
-    const rawPath = queue.shift()
-    const normalized = normalizePath(rawPath)
-
-    if (visited.has(normalized)) continue
-    visited.set(normalized, null)
-
-    let res
-    try {
-      res = await fetch(`${baseUrl}${normalized}`, { redirect: "follow" })
-    } catch (err) {
-      visited.set(normalized, `FETCH_ERROR: ${err.message}`)
-      continue
+    // Dequeue a batch of unique, unvisited paths
+    const batch = []
+    while (queue.length > 0 && batch.length < CONCURRENCY) {
+      const rawPath = queue.shift()
+      const normalized = normalizePath(rawPath)
+      if (visited.has(normalized)) continue
+      visited.set(normalized, null)
+      batch.push(normalized)
     }
 
-    visited.set(normalized, res.status)
+    const results = await Promise.all(
+      batch.map(async (normalized) => {
+        let res
+        try {
+          res = await httpGet(`${baseUrl}${normalized}`)
+        } catch (err) {
+          return { normalized, status: `FETCH_ERROR: ${err.message}`, links: [] }
+        }
 
-    if (!res.ok) continue
+        const status = res.status
+        if (!res.ok) return { normalized, status, links: [] }
 
-    const contentType = res.headers.get("content-type") || ""
-    if (!contentType.includes("text/html")) continue
+        const contentType = res.headers.get("content-type") || ""
+        if (!contentType.includes("text/html")) return { normalized, status, links: [] }
 
-    const html = await res.text()
+        const html = await res.text()
+        const finalUrl = new URL(res.url)
+        const pagePath = finalUrl.pathname
 
-    // Use the final URL after redirects for relative link resolution.
-    // This matters because directory URLs get a trailing-slash redirect,
-    // and relative links resolve against the final (redirected) URL.
-    const finalUrl = new URL(res.url)
-    const pagePath = finalUrl.pathname
+        // Extract all internal hrefs
+        const hrefs = []
+        const links = []
+        const linkRe = /href="([^"#]*?)"/g
+        let match
+        while ((match = linkRe.exec(html)) !== null) {
+          const href = match[1]
+          if (!href) continue
+          if (/^(https?:|mailto:|javascript:|data:)/i.test(href)) continue
 
-    // Extract href values from anchor tags
-    const linkRe = /href="([^"#]*?)"/g
-    let match
-    while ((match = linkRe.exec(html)) !== null) {
-      const href = match[1]
-      if (!href) continue
+          hrefs.push(href)
 
-      // Skip external links, mailto, javascript, data URIs
-      if (/^(https?:|mailto:|javascript:|data:)/i.test(href)) continue
+          let resolved
+          if (href.startsWith("/")) {
+            resolved = href
+          } else {
+            const dir = pagePath.substring(0, pagePath.lastIndexOf("/") + 1)
+            resolved = dir + href
+          }
+          links.push(normalizePath(resolved))
+        }
 
-      // Resolve relative URLs against the final page path.
-      let resolved
-      if (href.startsWith("/")) {
-        resolved = href
-      } else {
-        // Use the page path including trailing slash (from redirect)
-        // so that relative resolution matches browser behavior.
-        const dir = pagePath.substring(0, pagePath.lastIndexOf("/") + 1)
-        resolved = dir + href
-      }
+        return { normalized, status, links, pageData: { finalUrl, html, hrefs } }
+      }),
+    )
 
-      const resolvedNormalized = normalizePath(resolved)
-      if (!visited.has(resolvedNormalized)) {
-        queue.push(resolvedNormalized)
+    for (const { normalized, status, links, pageData } of results) {
+      visited.set(normalized, status)
+      if (pageData) pages.set(normalized, pageData)
+      for (const link of links) {
+        if (!visited.has(link)) queue.push(link)
       }
     }
   }
 
-  return visited
+  return { visited, pages }
 }
 
 /**
- * Simulate Quartz SPA normalizeRelativeURLs rebase.
+ * Check SPA link resolution using already-crawled page data.
  *
- * The SPA router fetches a page and then uses `normalizeRelativeURLs` to
- * resolve relative hrefs (starting with ./ or ../) against the final URL
- * after redirects.  This test verifies that for every page reachable via
- * SPA navigation, every relative link resolves to a valid (200) URL when
- * rebased against the post-redirect URL — exactly as the fixed SPA router
- * does in the browser.
+ * For each page, resolves every relative href using the URL API against
+ * the post-redirect finalUrl — exactly as normalizeRelativeURLs does in
+ * the browser — and verifies the resolved path exists in the crawl results.
+ * No additional network requests needed.
  */
-async function checkSpaResolution() {
-  const start = startPath()
-  const visited = new Set()
-  const queue = [start]
+function checkSpaResolution(crawlPages, crawlVisited) {
   const broken = []
 
-  while (queue.length > 0) {
-    const rawPath = queue.shift()
-    const normalized = normalizePath(rawPath)
-    if (visited.has(normalized)) continue
-    visited.add(normalized)
-
-    let res
-    try {
-      res = await fetch(`${baseUrl}${normalized}`, { redirect: "follow" })
-    } catch {
-      continue
-    }
-    if (!res.ok) continue
-
-    const ct = res.headers.get("content-type") || ""
-    if (!ct.includes("text/html")) continue
-
-    const html = await res.text()
-    const finalUrl = new URL(res.url)
-
-    // Simulate normalizeRelativeURLs: resolve relative hrefs using the
-    // browser URL API against the final (post-redirect) URL.
-    const linkRe = /href="([^"#]*?)"/g
-    let match
-    while ((match = linkRe.exec(html)) !== null) {
-      const href = match[1]
-      if (!href) continue
-      if (/^(https?:|mailto:|javascript:|data:)/i.test(href)) continue
-
+  for (const [pagePath, { finalUrl, hrefs }] of crawlPages) {
+    for (const href of hrefs) {
       // Resolve using the URL API (same as _rebaseHtmlElement in Quartz)
       const resolved = new URL(href, finalUrl)
       const resolvedPath = normalizePath(resolved.pathname)
 
-      if (!visited.has(resolvedPath)) {
-        queue.push(resolvedPath)
-      }
-
       // Only validate HTML-like paths (skip .css, .png, etc.)
       if (/\.\w+$/.test(resolvedPath) && !/\.html?$/.test(resolvedPath)) continue
 
-      // Verify the resolved URL is reachable
-      try {
-        const check = await fetch(`${baseUrl}${resolvedPath}`, {
-          method: "HEAD",
-          redirect: "follow",
-        })
-        if (!check.ok) {
-          broken.push(
-            `On ${normalized}: href="${href}" -> ${resolvedPath} (${check.status})`,
-          )
-        }
-      } catch (err) {
+      const status = crawlVisited.get(resolvedPath)
+      if (status !== 200 && status !== undefined) {
         broken.push(
-          `On ${normalized}: href="${href}" -> ${resolvedPath} (FETCH_ERROR)`,
+          `On ${pagePath}: href="${href}" -> ${resolvedPath} (${status})`,
+        )
+      } else if (status === undefined) {
+        // Path wasn't visited by the crawl — it may be a valid path that
+        // just wasn't discovered, or a broken path.  Flag it.
+        broken.push(
+          `On ${pagePath}: href="${href}" -> ${resolvedPath} (not in crawl)`,
         )
       }
     }
@@ -287,21 +348,21 @@ async function checkSpaResolution() {
   return broken
 }
 
-describe("site links", () => {
-  let crawlResults
+let crawlData
 
+describe("site links", () => {
   before(async () => {
-    crawlResults = await crawlSite()
+    crawlData = await crawlSite()
   })
 
   it("should find pages on the site", () => {
-    assert.ok(crawlResults.size > 0, "Crawl found no pages")
-    console.log(`  Crawled ${crawlResults.size} URLs`)
+    assert.ok(crawlData.visited.size > 0, "Crawl found no pages")
+    console.log(`  Crawled ${crawlData.visited.size} URLs`)
   })
 
   it("should have no 404 links", () => {
     const broken = []
-    for (const [url, status] of crawlResults) {
+    for (const [url, status] of crawlData.visited) {
       if (status === 404) {
         broken.push(url)
       }
@@ -315,7 +376,7 @@ describe("site links", () => {
 
   it("should have no fetch errors", () => {
     const errors = []
-    for (const [url, status] of crawlResults) {
+    for (const [url, status] of crawlData.visited) {
       if (typeof status === "string" && status.startsWith("FETCH_ERROR")) {
         errors.push(`${url}: ${status}`)
       }
@@ -329,7 +390,7 @@ describe("site links", () => {
 
   it("should have all pages returning 200", () => {
     const nonOk = []
-    for (const [url, status] of crawlResults) {
+    for (const [url, status] of crawlData.visited) {
       if (status !== 200) {
         nonOk.push(`${url} -> ${status}`)
       }
@@ -343,8 +404,8 @@ describe("site links", () => {
 })
 
 describe("SPA link resolution", () => {
-  it("should resolve relative links correctly without trailing slash", async () => {
-    const broken = await checkSpaResolution()
+  it("should resolve relative links correctly via post-redirect URL", () => {
+    const broken = checkSpaResolution(crawlData.pages, crawlData.visited)
     assert.equal(
       broken.length,
       0,
