@@ -15,10 +15,6 @@ content/
       <topic>/
         index.md           # Topic overview (from README.md)
         *.md               # Sub-topic pages
-2026/
-  <yymmdd>-<topic>/
-    README.md              # Source research files (kept as archive)
-    *.md
 quartz/                    # Quartz framework (do not modify)
 quartz.config.ts           # Site config (title, theme, plugins)
 quartz.layout.ts           # Page layout (sidebar, graph, TOC, etc.)
