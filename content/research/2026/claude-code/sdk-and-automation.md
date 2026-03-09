@@ -199,3 +199,12 @@ claude auth login --sso            # Enterprise SSO
 - Anthropic Console (API key with credits)
 - Amazon Bedrock (`CLAUDE_CODE_USE_BEDROCK=1`)
 - Google Vertex AI (`CLAUDE_CODE_USE_VERTEX=1`)
+
+## References
+
+- [Claude Code SDK Documentation](https://docs.anthropic.com/en/docs/claude-code/sdk)
+- [Claude Code SDK (npm)](https://www.npmjs.com/package/@anthropic-ai/claude-code)
+- [Claude Code GitHub Action](https://github.com/anthropics/claude-code-action)
+- [Claude Code CLI Usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+- [Claude Code Headless Mode](https://docs.anthropic.com/en/docs/claude-code/cli-usage#headless-mode)
+- [Model Context Protocol SDK](https://github.com/modelcontextprotocol/typescript-sdk)

@@ -277,3 +277,12 @@ claude mcp remove github           # Remove server
 - **macOS/Windows**: System keychain
 - **Linux**: Credentials file
 - Rotate tokens in Anthropic Console account settings
+
+## References
+
+- [Claude Code Settings](https://docs.anthropic.com/en/docs/claude-code/settings)
+- [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- [Claude Code MCP](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- [Claude Code Permissions](https://docs.anthropic.com/en/docs/claude-code/security#permissions)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [MCP Server Registry](https://github.com/modelcontextprotocol/servers)

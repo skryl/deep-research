@@ -38,3 +38,13 @@ The project emerged from collaborations between SiFive, Google, Microsoft, and a
 | [chisel-firrtl](research/2026/mlir-hardware/chisel-firrtl) | Chisel, FIRRTL, and the SFC-to-CIRCT migration |
 | [ecosystem](research/2026/mlir-hardware/ecosystem) | HDL integration (Chisel, Amaranth, SpinalHDL), ESI dialect, FPGA tooling, and real-world adoption |
 | [community](research/2026/mlir-hardware/community) | Contributors, governance, and organizational involvement |
+
+## References
+
+- [CIRCT Project](https://circt.llvm.org/)
+- [CIRCT GitHub Repository](https://github.com/llvm/circt)
+- [MLIR Documentation](https://mlir.llvm.org/)
+- [Calyx Project](https://calyxir.org/)
+- [Dynamatic Website](https://dynamatic.epfl.ch/)
+- [ScaleHLS GitHub](https://github.com/UIUC-ChenLab/scalehls)
+- [MLIR Users Page](https://mlir.llvm.org/users/)

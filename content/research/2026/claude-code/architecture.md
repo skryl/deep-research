@@ -140,3 +140,11 @@ Claude Code runs in three environments:
 - **Permission prompts** — Dangerous operations require explicit approval.
 - **Plan mode** — Claude uses read-only tools only, creates a plan you can approve before execution.
 - **Sandboxing** — Optional filesystem and network restrictions via settings.
+
+## References
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code Architecture Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+- [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- [Claude Code Context Management](https://docs.anthropic.com/en/docs/claude-code/context-management)
+- [Model Context Protocol Specification](https://spec.modelcontextprotocol.io/)

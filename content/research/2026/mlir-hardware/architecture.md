@@ -84,38 +84,18 @@ The central architectural principle of CIRCT is **progressive lowering** — the
 
 ### Abstraction Levels
 
-```
-┌─────────────────────────────────────────────┐
-│  Source Languages                             │
-│  (Chisel, SystemVerilog, Calyx, C/C++ HLS)   │
-└──────────────────┬──────────────────────────┘
-                   │ Frontend parsing
-                   ▼
-┌─────────────────────────────────────────────┐
-│  High-Level Dialects                          │
-│  (firrtl, calyx, moore, handshake)            │
-│  Design intent, scheduling, control flow      │
-└──────────────────┬──────────────────────────┘
-                   │ Dialect lowering passes
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Core Hardware Dialects                       │
-│  (hw, comb, seq)                              │
-│  Structural RTL with typed ports and wires    │
-└──────────────────┬──────────────────────────┘
-                   │ Target-specific lowering
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Emission Dialects                            │
-│  (sv, emit)                                   │
-│  SystemVerilog constructs and output format    │
-└──────────────────┬──────────────────────────┘
-                   │ Code generation
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Output Artifacts                             │
-│  (SystemVerilog, simulation binary, SMT)      │
-└─────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A["Source Languages<br/>(Chisel, SystemVerilog, Calyx, C/C++ HLS)"]
+    B["High-Level Dialects<br/>(firrtl, calyx, moore, handshake)<br/>Design intent, scheduling, control flow"]
+    C["Core Hardware Dialects<br/>(hw, comb, seq)<br/>Structural RTL with typed ports and wires"]
+    D["Emission Dialects<br/>(sv, emit)<br/>SystemVerilog constructs and output format"]
+    E["Output Artifacts<br/>(SystemVerilog, simulation binary, SMT)"]
+
+    A -->|"Frontend parsing"| B
+    B -->|"Dialect lowering passes"| C
+    C -->|"Target-specific lowering"| D
+    D -->|"Code generation"| E
 ```
 
 ### Why Progressive Lowering Matters
@@ -190,3 +170,12 @@ Every operation in CIRCT has automatically-generated and hand-written verifiers 
 ### Location Tracking
 
 MLIR operations carry source location information through every transformation. When CIRCT emits a SystemVerilog error or warning, it can point back to the original Chisel/FIRRTL source line — not the generated Verilog. This is a significant improvement over traditional flows where generated RTL errors are nearly impossible to trace.
+
+## References
+
+- [CIRCT Project](https://circt.llvm.org/)
+- [CIRCT GitHub Repository](https://github.com/llvm/circt)
+- [MLIR Documentation](https://mlir.llvm.org/)
+- [MLIR Language Reference](https://mlir.llvm.org/docs/LangRef/)
+- [CIRCT Getting Started](https://circt.llvm.org/docs/GettingStarted/)
+- [FIRRTL Dialect Rationale](https://circt.llvm.org/docs/Dialects/FIRRTL/RationaleFIRRTL/)

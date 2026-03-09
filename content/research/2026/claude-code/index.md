@@ -16,6 +16,14 @@ Claude Code is Anthropic's official command-line interface that brings Claude di
 - **Hooks** enable users to inject custom shell commands at specific points in the agentic loop (before/after tool use, on session start, etc.).
 - Supports **headless/CI mode** for non-interactive use in pipelines and automation.
 
+## References
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code GitHub](https://github.com/anthropics/claude-code)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [Anthropic API Documentation](https://docs.anthropic.com/en/docs)
+- [Claude Code SDK (npm)](https://www.npmjs.com/package/@anthropic-ai/claude-code)
+
 ## Contents
 
 | File | Description |
