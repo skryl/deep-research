@@ -209,6 +209,84 @@ async function crawlSite() {
   return visited
 }
 
+/**
+ * Simulate Quartz SPA normalizeRelativeURLs rebase.
+ *
+ * The SPA router fetches a page and then uses `normalizeRelativeURLs` to
+ * resolve relative hrefs (starting with ./ or ../) against the final URL
+ * after redirects.  This test verifies that for every page reachable via
+ * SPA navigation, every relative link resolves to a valid (200) URL when
+ * rebased against the post-redirect URL — exactly as the fixed SPA router
+ * does in the browser.
+ */
+async function checkSpaResolution() {
+  const start = startPath()
+  const visited = new Set()
+  const queue = [start]
+  const broken = []
+
+  while (queue.length > 0) {
+    const rawPath = queue.shift()
+    const normalized = normalizePath(rawPath)
+    if (visited.has(normalized)) continue
+    visited.add(normalized)
+
+    let res
+    try {
+      res = await fetch(`${baseUrl}${normalized}`, { redirect: "follow" })
+    } catch {
+      continue
+    }
+    if (!res.ok) continue
+
+    const ct = res.headers.get("content-type") || ""
+    if (!ct.includes("text/html")) continue
+
+    const html = await res.text()
+    const finalUrl = new URL(res.url)
+
+    // Simulate normalizeRelativeURLs: resolve relative hrefs using the
+    // browser URL API against the final (post-redirect) URL.
+    const linkRe = /href="([^"#]*?)"/g
+    let match
+    while ((match = linkRe.exec(html)) !== null) {
+      const href = match[1]
+      if (!href) continue
+      if (/^(https?:|mailto:|javascript:|data:)/i.test(href)) continue
+
+      // Resolve using the URL API (same as _rebaseHtmlElement in Quartz)
+      const resolved = new URL(href, finalUrl)
+      const resolvedPath = normalizePath(resolved.pathname)
+
+      if (!visited.has(resolvedPath)) {
+        queue.push(resolvedPath)
+      }
+
+      // Only validate HTML-like paths (skip .css, .png, etc.)
+      if (/\.\w+$/.test(resolvedPath) && !/\.html?$/.test(resolvedPath)) continue
+
+      // Verify the resolved URL is reachable
+      try {
+        const check = await fetch(`${baseUrl}${resolvedPath}`, {
+          method: "HEAD",
+          redirect: "follow",
+        })
+        if (!check.ok) {
+          broken.push(
+            `On ${normalized}: href="${href}" -> ${resolvedPath} (${check.status})`,
+          )
+        }
+      } catch (err) {
+        broken.push(
+          `On ${normalized}: href="${href}" -> ${resolvedPath} (FETCH_ERROR)`,
+        )
+      }
+    }
+  }
+
+  return broken
+}
+
 describe("site links", () => {
   let crawlResults
 
@@ -260,6 +338,17 @@ describe("site links", () => {
       nonOk.length,
       0,
       `Found ${nonOk.length} non-200 response(s):\n  ${nonOk.join("\n  ")}`,
+    )
+  })
+})
+
+describe("SPA link resolution", () => {
+  it("should resolve relative links correctly without trailing slash", async () => {
+    const broken = await checkSpaResolution()
+    assert.equal(
+      broken.length,
+      0,
+      `Found ${broken.length} SPA resolution mismatch(es):\n  ${broken.join("\n  ")}`,
     )
   })
 })
