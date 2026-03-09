@@ -62,18 +62,24 @@ async function _navigate(url: URL, isBack: boolean = false) {
   isNavigating = true
   startLoading()
   p = p || new DOMParser()
-  const contents = await fetchCanonical(url)
-    .then((res) => {
-      const contentType = res.headers.get("content-type")
-      if (contentType?.startsWith("text/html")) {
-        return res.text()
-      } else {
-        window.location.assign(url)
+  let contents: string | undefined
+  let finalUrl: URL = url
+  try {
+    const res = await fetchCanonical(url)
+    const contentType = res.headers.get("content-type")
+    if (contentType?.startsWith("text/html")) {
+      // Use the final URL after redirects (e.g. trailing-slash redirect)
+      // so that relative link resolution matches what the browser would do.
+      if (res.url) {
+        finalUrl = new URL(res.url)
       }
-    })
-    .catch(() => {
+      contents = await res.text()
+    } else {
       window.location.assign(url)
-    })
+    }
+  } catch {
+    window.location.assign(url)
+  }
 
   if (!contents) return
 
@@ -86,7 +92,7 @@ async function _navigate(url: URL, isBack: boolean = false) {
   cleanupFns.clear()
 
   const html = p.parseFromString(contents, "text/html")
-  normalizeRelativeURLs(html, url)
+  normalizeRelativeURLs(html, finalUrl)
 
   let title = html.querySelector("title")?.textContent
   if (title) {
