@@ -15,6 +15,13 @@ import http from "node:http"
 import fs from "node:fs"
 import path from "node:path"
 
+/**
+ * Base path prefix derived from quartz.config.ts baseUrl.
+ * The local server mounts public/ under this prefix so that relative link
+ * resolution matches the production GitHub Pages deployment exactly.
+ */
+const BASE_PATH = "/deep-research"
+
 const externalBaseUrl = process.env.BASE_URL
 let baseUrl
 let server
@@ -44,9 +51,7 @@ function getMimeType(filePath) {
  * trailing slashes (except for root `/`).
  */
 function normalizePath(p) {
-  // Use path.posix.normalize to resolve . and .. segments
   let normalized = path.posix.normalize(p)
-  // Remove trailing slash (keep root)
   if (normalized.length > 1 && normalized.endsWith("/")) {
     normalized = normalized.slice(0, -1)
   }
@@ -68,7 +73,28 @@ before(async () => {
 
   server = http.createServer((req, res) => {
     const url = new URL(req.url, "http://localhost")
-    let filePath = path.join(publicDir, decodeURIComponent(url.pathname))
+    const pathname = decodeURIComponent(url.pathname)
+
+    // Strip base path prefix to map to the public directory
+    if (!pathname.startsWith(BASE_PATH)) {
+      res.writeHead(404)
+      res.end("Not Found")
+      return
+    }
+
+    const relativePath = pathname.slice(BASE_PATH.length) || "/"
+    let filePath = path.join(publicDir, relativePath)
+
+    // Directory without trailing slash -> redirect (matches GitHub Pages)
+    if (
+      fs.existsSync(filePath) &&
+      fs.statSync(filePath).isDirectory() &&
+      !pathname.endsWith("/")
+    ) {
+      res.writeHead(301, { Location: pathname + "/" })
+      res.end()
+      return
+    }
 
     // Directory -> index.html
     if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
@@ -103,12 +129,24 @@ after(() => {
 })
 
 /**
- * Crawl the site starting from the root, collecting all internal links.
+ * Determine the starting path for the crawl.  For the local server it is
+ * BASE_PATH; for an external BASE_URL we derive it from the URL.
+ */
+function startPath() {
+  if (externalBaseUrl) {
+    const u = new URL(externalBaseUrl)
+    return normalizePath(u.pathname) || "/"
+  }
+  return BASE_PATH
+}
+
+/**
+ * Crawl the site starting from the base path, collecting all internal links.
  * Returns a Map of normalized URL path -> HTTP status code (or error string).
  */
 async function crawlSite() {
   const visited = new Map()
-  const queue = ["/"]
+  const queue = [startPath()]
 
   while (queue.length > 0) {
     const rawPath = queue.shift()
@@ -134,6 +172,12 @@ async function crawlSite() {
 
     const html = await res.text()
 
+    // Use the final URL after redirects for relative link resolution.
+    // This matters because directory URLs get a trailing-slash redirect,
+    // and relative links resolve against the final (redirected) URL.
+    const finalUrl = new URL(res.url)
+    const pagePath = finalUrl.pathname
+
     // Extract href values from anchor tags
     const linkRe = /href="([^"#]*?)"/g
     let match
@@ -144,18 +188,14 @@ async function crawlSite() {
       // Skip external links, mailto, javascript, data URIs
       if (/^(https?:|mailto:|javascript:|data:)/i.test(href)) continue
 
-      // Resolve relative URLs against the current page path.
-      // Browsers resolve relative links against the parent directory of the
-      // current URL (treating the last segment as a filename), so we use
-      // the parent directory, not the page path itself.
+      // Resolve relative URLs against the final page path.
       let resolved
       if (href.startsWith("/")) {
         resolved = href
       } else {
-        const dir = normalized.substring(
-          0,
-          normalized.lastIndexOf("/") + 1,
-        )
+        // Use the page path including trailing slash (from redirect)
+        // so that relative resolution matches browser behavior.
+        const dir = pagePath.substring(0, pagePath.lastIndexOf("/") + 1)
         resolved = dir + href
       }
 
