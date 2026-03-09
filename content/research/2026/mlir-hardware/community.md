@@ -6,7 +6,7 @@ weight: 9
 
 ## Project History
 
-CIRCT emerged around 2020 from the intersection of two trends: the maturation of MLIR as a general-purpose compiler infrastructure, and the growing need for better open-source hardware design tools driven by the RISC-V ecosystem.
+CIRCT emerged around 2020[^1] from the intersection of two trends: the maturation of MLIR as a general-purpose compiler infrastructure, and the growing need for better open-source hardware design tools driven by the RISC-V ecosystem.
 
 ### Key Milestones
 
@@ -96,7 +96,7 @@ The GitHub contributors page at `github.com/llvm/circt/graphs/contributors` list
 
 ## Governance
 
-CIRCT operates under the **LLVM project's governance structure**. There is no separate CIRCT-specific governance document — the project follows all LLVM policies:
+CIRCT operates under the **LLVM project's governance structure**[^3]. There is no separate CIRCT-specific governance document — the project follows all LLVM policies:
 
 ### Contribution Process
 
@@ -108,7 +108,7 @@ CIRCT operates under the **LLVM project's governance structure**. There is no se
 
 ### Communication Channels
 
-- **LLVM Discourse Forum**: The primary venue for design discussions, RFCs, and announcements (under the CIRCT category)
+- **LLVM Discourse Forum**[^2]: The primary venue for design discussions, RFCs, and announcements (under the CIRCT category)
 - **LLVM Discord Server**: The `#circt` channel for real-time discussion
 - **Weekly video meetings**: Open meetings for design discussions and status updates
 - **GitHub issues and PRs**: For bug reports, feature requests, and code review
@@ -146,11 +146,20 @@ As of early 2026:
 
 CIRCT's adoption extends beyond its direct contributors:
 
-- **Chipyard**: UC Berkeley's SoC design framework uses firtool as its FIRRTL compiler
+- **Chipyard**[^5]: UC Berkeley's SoC design framework uses firtool as its FIRRTL compiler
 - **Chisel**: The hardware description language natively supports CIRCT as its backend
-- **OpenTitan**: Google's open-source silicon root of trust project has used CIRCT for formal verification
-- **CHIPS Alliance**: Industry consortium that supports CIRCT-adjacent projects
+- **OpenTitan**[^6]: Google's open-source silicon root of trust project has used CIRCT for formal verification
+- **CHIPS Alliance**[^4]: Industry consortium that supports CIRCT-adjacent projects
 - **Academic research**: Multiple research groups build on CIRCT for simulation, verification, and HLS research
+
+## Footnotes
+
+[^1]: [CIRCT GitHub Repository](https://github.com/llvm/circt)
+[^2]: [LLVM Discourse — CIRCT Category](https://discourse.llvm.org/c/circt/)
+[^3]: [LLVM Governance](https://llvm.org/docs/GoverningBoard.html)
+[^4]: [CHIPS Alliance](https://chipsalliance.org/)
+[^5]: [Chipyard SoC Framework](https://chipyard.readthedocs.io/)
+[^6]: [OpenTitan Project](https://opentitan.org/)
 
 ## References
 

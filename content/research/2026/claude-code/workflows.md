@@ -4,7 +4,7 @@ weight: 4
 ---
 
 
-## Exploring an Unfamiliar Codebase
+## Exploring an Unfamiliar Codebase[^1]
 
 ```
 > give me an overview of this codebase
@@ -70,7 +70,7 @@ Claude handles multi-file refactors, updating imports, references, and tests con
 > look at the failing CI checks and fix them
 ```
 
-Claude manages the full git lifecycle — staging, committing, branching, and PR creation via `gh` CLI.
+Claude manages the full git lifecycle — staging, committing, branching, and PR creation via `gh` CLI[^4].
 
 ## Multi-File Bulk Operations
 
@@ -84,7 +84,7 @@ Claude excels at repetitive changes that span many files, maintaining consistenc
 
 ## Piping and Scripting
 
-Claude Code follows Unix philosophy — composable with pipes:
+Claude Code follows Unix philosophy[^2] — composable with pipes:
 
 ```bash
 # Analyze logs
@@ -115,7 +115,7 @@ Claude may:
 
 You can also be explicit: "use a sub-agent to investigate the auth module while you work on the database layer."
 
-## Tips for Effective Prompting
+## Tips for Effective Prompting[^3]
 
 1. **Be specific** — "fix the bug in the login form" > "fix the bug"
 2. **Provide context** — mention file names, error messages, or stack traces
@@ -125,6 +125,13 @@ You can also be explicit: "use a sub-agent to investigate the auth module while 
 6. **Use `/compact`** — before shifting focus to a new area of the codebase
 7. **Use plan mode** — for complex tasks, have Claude plan first, then execute
 8. **Leverage skills** — create reusable workflows for common tasks (deploy, review, etc.)
+
+## Footnotes
+
+[^1]: [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+[^2]: [Claude Code CLI Usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+[^3]: [Claude Code Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+[^4]: [Claude Code GitHub Action](https://github.com/anthropics/claude-code-action)
 
 ## References
 

@@ -6,9 +6,9 @@ weight: 4
 
 ## Background: The Chisel/FIRRTL Ecosystem
 
-**Chisel** (Constructive Hardware in a Scala Embedded Language) is a hardware description language embedded in Scala, developed at UC Berkeley. Instead of writing Verilog directly, hardware engineers write Scala programs that generate hardware — enabling software-like abstractions (parameterized modules, type-safe interfaces, functional composition) for hardware design.
+**Chisel**[^1] (Constructive Hardware in a Scala Embedded Language) is a hardware description language embedded in Scala, developed at UC Berkeley. Instead of writing Verilog directly, hardware engineers write Scala programs that generate hardware — enabling software-like abstractions (parameterized modules, type-safe interfaces, functional composition) for hardware design[^2].
 
-**FIRRTL** (Flexible Intermediate Representation for RTL) is the intermediate representation emitted by Chisel. The original compilation flow was:
+**FIRRTL**[^3] (Flexible Intermediate Representation for RTL) is the intermediate representation emitted by Chisel. The original compilation flow was:
 
 ```mermaid
 graph LR
@@ -28,7 +28,7 @@ As RISC-V SoC designs (particularly SiFive's commercial chips and the open-sourc
 
 ## The Solution: CIRCT's FIRRTL Dialect
 
-CIRCT's FIRRTL dialect provides a **drop-in replacement** for the SFC. The CIRCT implementation:
+CIRCT's FIRRTL dialect[^4] provides a **drop-in replacement** for the SFC. The CIRCT implementation:
 
 - Is written in C++ using MLIR's infrastructure, providing 10-100x faster compilation
 - Tracks the FIRRTL specification closely, with strategic deviations to leverage MLIR's strengths
@@ -51,7 +51,7 @@ The FIRRTL spec combines `is invalid` as a statement. CIRCT separates this into 
 
 ## The Two-Compiler Era (Chipyard)
 
-During the transition period, the Chipyard SoC framework (used for Rocket Chip, BOOM, and other Berkeley designs) ran both compilers:
+During the transition period, the Chipyard[^6] SoC framework (used for Rocket Chip, BOOM, and other Berkeley designs) ran both compilers:
 
 1. **SFC** compiled Chisel to CHIRRTL (an intermediate FIRRTL format)
 2. **MFC** (MLIR FIRRTL Compiler, i.e., firtool) compiled CHIRRTL to Verilog
@@ -84,7 +84,7 @@ graph TD
 
 **C API**: Chisel can invoke firtool programmatically through its C API (`circt-c/Firtool.h`), avoiding the overhead of process spawning for iterative workflows.
 
-**chisel-circt (archived)**: SiFive previously maintained a separate `chisel-circt` library that provided a ChiselStage-like interface for MFC. This project is now archived because upstream Chisel natively supports CIRCT.
+**chisel-circt (archived)**: SiFive previously maintained a separate `chisel-circt`[^5] library that provided a ChiselStage-like interface for MFC. This project is now archived because upstream Chisel natively supports CIRCT.
 
 ### FIRRTL Annotations
 
@@ -128,6 +128,15 @@ While Chisel is the primary producer of FIRRTL, the FIRRTL format is designed as
 - **PyRTL** — a Python-based hardware description framework
 - **ESSENT** — a high-performance simulator that consumes FIRRTL directly
 - **Custom generators** — any tool can emit `.fir` files for processing by firtool
+
+## Footnotes
+
+[^1]: [Chisel GitHub Repository](https://github.com/chipsalliance/chisel)
+[^2]: [Chisel Documentation](https://www.chisel-lang.org/)
+[^3]: [FIRRTL Specification](https://github.com/chipsalliance/firrtl-spec)
+[^4]: [FIRRTL Dialect Rationale](https://circt.llvm.org/docs/Dialects/FIRRTL/RationaleFIRRTL/)
+[^5]: [SiFive chisel-circt](https://github.com/sifive/chisel-circt)
+[^6]: [Chipyard SoC Framework](https://chipyard.readthedocs.io/)
 
 ## References
 

@@ -12,7 +12,7 @@ These three dialects form the backbone of CIRCT and represent hardware at the re
 
 ### `hw` — Hardware Structure
 
-The `hw` dialect provides structural abstractions analogous to Verilog's module/instance hierarchy. It is designed as an open extension point — other dialects "mix in" with `hw` to add functionality.
+The `hw` dialect[^1] provides structural abstractions analogous to Verilog's module/instance hierarchy. It is designed as an open extension point — other dialects "mix in" with `hw` to add functionality.
 
 Key operations:
 - **`hw.module`** — defines a hardware module with typed input/output ports
@@ -84,7 +84,7 @@ The LLHD dialect provides a lower-level hardware description that captures time-
 
 ### `calyx` — Control and Data Separation
 
-Calyx (from Cornell's CAPRA group) is an intermediate language for HLS that separates hardware into:
+Calyx[^2] (from Cornell's CAPRA group) is an intermediate language for HLS that separates hardware into:
 1. **Structural components**: registers, ALUs, memories, multiplexers — describing the datapath
 2. **Control program**: FSM-like constructs (`seq`, `par`, `if`, `while`) — describing the schedule
 
@@ -127,14 +127,14 @@ Models scheduling problems as a set of operations with precedence constraints an
 
 ### `esi` — Elastic Silicon Interconnect
 
-ESI addresses the SoC communication problem. Key concepts:
+ESI[^3] addresses the SoC communication problem. Key concepts:
 
 - **Channels**: Point-to-point, typed connections between modules with latency-insensitive semantics (FIFO-based)
 - **Message types**: Rich type system including structs, arrays, unions, and variable-length lists
 - **Windows**: Break large messages into frames to save wire area at the cost of bandwidth
 - **Services**: Abstract communication substrates — ESI can select AXI, Avalon-MM, or custom protocols
 
-ESI was originally developed at Microsoft and is being integrated into CIRCT. It provides typed, latency-insensitive interconnect that abstracts away signaling protocol details.
+ESI was originally developed at Microsoft[^4] and is being integrated into CIRCT. It provides typed, latency-insensitive interconnect that abstracts away signaling protocol details.
 
 ```mlir
 // A typed channel carrying 32-bit integers
@@ -217,7 +217,7 @@ While not part of CIRCT itself, the standard MLIR `affine` and `scf` dialects pl
 
 ### `affine` Dialect
 
-The affine dialect represents loop nests with affine (linear) bounds and subscripts. This enables polyhedral analysis — a mathematically precise framework for reasoning about loop dependencies, enabling:
+The `affine` dialect[^5] represents loop nests with affine (linear) bounds and subscripts. This enables polyhedral analysis — a mathematically precise framework for reasoning about loop dependencies, enabling:
 
 - **Loop tiling**: Breaking loops into blocks for data locality
 - **Loop interchange**: Reordering loop dimensions
@@ -234,7 +234,7 @@ ScaleHLS and the POM framework both use the affine dialect as their primary loop
 
 ### `scf` (Structured Control Flow) Dialect
 
-The SCF dialect represents general structured control flow — `for`, `while`, `if` — without the affine restriction. It serves as:
+The `scf` dialect[^6] represents general structured control flow — `for`, `while`, `if` — without the affine restriction. It serves as:
 
 1. A **lowering target** for `affine` (after affine analysis is complete, loops lower to `scf.for`)
 2. An **input representation** for HLS tools that don't need polyhedral analysis
@@ -243,6 +243,15 @@ The SCF dialect represents general structured control flow — `for`, `while`, `
 The lowering path is: `affine` -> `scf` -> `calyx`/`handshake` (HLS scheduling) -> `hw`/`comb`/`seq` (RTL).
 
 AMD's AIR dialect transforms `scf.for` loops into ping-pong buffering patterns for AIE architectures, constructing dependency edges between producer and consumer processes for concurrent communication and compute.
+
+## Footnotes
+
+[^1]: [HW Dialect Rationale](https://circt.llvm.org/docs/Dialects/HW/RationaleHW/)
+[^2]: [Calyx Dialect in CIRCT](https://circt.llvm.org/docs/Dialects/Calyx/)
+[^3]: [ESI Dialect Documentation](https://circt.llvm.org/docs/Dialects/ESI/)
+[^4]: [ESI Rationale](https://circt.llvm.org/docs/Dialects/ESI/RationaleESI/)
+[^5]: [MLIR Affine Dialect](https://mlir.llvm.org/docs/Dialects/Affine/)
+[^6]: [MLIR SCF Dialect](https://mlir.llvm.org/docs/Dialects/SCFDialect/)
 
 ## References
 

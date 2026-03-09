@@ -6,7 +6,7 @@ weight: 2
 
 ## The Agentic Loop
 
-Claude Code operates on an **agentic loop** — a cycle of reasoning, tool use, and observation:
+Claude Code operates on an **agentic loop**[^1] — a cycle of reasoning, tool use, and observation:
 
 1. **User prompt** — The user provides a task or question.
 2. **Gather context** — Claude searches files, reads code, and builds understanding.
@@ -71,7 +71,7 @@ Tools can be called **in parallel** when their inputs are independent, improving
 
 ## Sub-Agents
 
-The `Agent` tool spawns specialized sub-agents that run as child processes with their own context windows:
+The `Agent` tool spawns specialized sub-agents[^2] that run as child processes with their own context windows:
 
 | Agent Type | Purpose | Tools Available |
 |------------|---------|-----------------|
@@ -98,7 +98,7 @@ The `Agent` tool spawns specialized sub-agents that run as child processes with 
 
 ## Context Management
 
-Claude Code automatically manages its context window:
+Claude Code automatically manages its context window[^3]:
 
 - **Auto-compaction** — When approaching ~95% of context limits, Claude automatically clears old tool outputs first, then summarizes the conversation. CLAUDE.md instructions are preserved through compaction.
 - **On-demand reading** — Files are read on-demand rather than pre-loaded, keeping context focused.
@@ -112,7 +112,7 @@ Claude Code automatically manages its context window:
 |---------|-------------|------|----------|
 | CLAUDE.md | Session start | Every request | Always-on rules |
 | Skills | Start (description) + invocation (content) | Low → High | On-demand knowledge |
-| MCP servers | Session start (tool definitions) | Every request | External connections |
+| MCP servers[^4] | Session start (tool definitions) | Every request | External connections |
 | Sub-agents | On spawn | Isolated context | Context isolation |
 | Hooks | On event | Zero (unless returns output) | Automation |
 
@@ -131,7 +131,7 @@ Claude Code runs in three environments:
 - **Claude Sonnet** — Default for most coding tasks; good balance of speed and capability.
 - **Claude Opus** — Stronger reasoning for complex architectural decisions.
 - **Claude Haiku** — Fast and cheap for simple tasks; used by Explore sub-agents.
-- Switch with `/model` during a session or `claude --model <name>` at startup.
+- Switch with `/model` during a session or `claude --model <name>` at startup[^5].
 - Sub-agents may use different models depending on task complexity.
 
 ## Safety Mechanisms
@@ -140,6 +140,14 @@ Claude Code runs in three environments:
 - **Permission prompts** — Dangerous operations require explicit approval.
 - **Plan mode** — Claude uses read-only tools only, creates a plan you can approve before execution.
 - **Sandboxing** — Optional filesystem and network restrictions via settings.
+
+## Footnotes
+
+[^1]: [Claude Code Architecture Overview](https://docs.anthropic.com/en/docs/claude-code/overview)
+[^2]: [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+[^3]: [Claude Code Context Management](https://docs.anthropic.com/en/docs/claude-code/context-management)
+[^4]: [Model Context Protocol Specification](https://spec.modelcontextprotocol.io/)
+[^5]: [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 
 ## References
 

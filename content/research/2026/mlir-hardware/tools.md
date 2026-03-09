@@ -8,7 +8,7 @@ CIRCT provides several command-line tools that compose the project's libraries i
 
 ## firtool — The FIRRTL Compiler
 
-`firtool` is the primary entry point for compiling FIRRTL hardware descriptions to implementation formats. It serves as a drop-in replacement for the Scala FIRRTL Compiler (SFC) and is now the default backend used by Chisel.
+`firtool` is the primary entry point for compiling FIRRTL hardware descriptions to implementation formats. It serves as a drop-in replacement for the Scala FIRRTL Compiler (SFC)[^1] and is now the default backend used by Chisel.
 
 ### Input Formats
 
@@ -90,7 +90,7 @@ The `--lowering-options=` flag controls SystemVerilog emission for compatibility
 
 ### C API
 
-firtool functionality is also available through a C API (`circt-c/Firtool.h`), enabling integration with other programming languages and tools. This is used by the Chisel Scala library to invoke firtool programmatically.
+firtool functionality[^3] is also available through a C API (`circt-c/Firtool.h`), enabling integration with other programming languages and tools. This is used by the Chisel Scala library to invoke firtool programmatically.
 
 ### Layer System
 
@@ -120,7 +120,7 @@ circt-opt --help | grep "Passes:"
 circt-opt --pass-pipeline='builtin.module(firrtl-lower-types)' input.mlir
 ```
 
-### Key Pass Categories
+### Key Pass Categories[^4]
 
 **FIRRTL passes** (prefixed `firrtl-`):
 - `firrtl-infer-widths` — resolve unknown widths
@@ -154,7 +154,7 @@ circt-translate --export-split-verilog input.mlir -o output_dir/
 
 ## circt-verilog — SystemVerilog Frontend
 
-Imports SystemVerilog designs into CIRCT using the Slang parser. The imported design enters the Moore dialect and can then be lowered through the standard CIRCT pipeline.
+Imports SystemVerilog designs into CIRCT using the Slang parser[^5]. The imported design enters the Moore dialect and can then be lowered through the standard CIRCT pipeline.
 
 ```bash
 # Import SystemVerilog and emit MLIR
@@ -211,7 +211,7 @@ hlstool supports `--checkpoint` to save compilation state, enabling resumption a
 
 ## Building CIRCT Tools
 
-All tools are built from the CIRCT repository using CMake and Ninja:
+All tools are built from the CIRCT repository[^2] using CMake and Ninja:
 
 ```bash
 # Clone with LLVM submodule
@@ -231,6 +231,14 @@ ninja firtool circt-opt circt-translate
 ```
 
 CIRCT requires a C++17 compiler, CMake 3.13.4+, Python 3, and Ninja. The LLVM submodule pins the exact LLVM/MLIR version tested with the current CIRCT release.
+
+## Footnotes
+
+[^1]: [CIRCT GitHub Repository](https://github.com/llvm/circt)
+[^2]: [CIRCT Getting Started](https://circt.llvm.org/docs/GettingStarted/)
+[^3]: [firtool Documentation](https://circt.llvm.org/docs/Tools/firtool/)
+[^4]: [CIRCT Passes](https://circt.llvm.org/docs/Passes/)
+[^5]: [Slang SystemVerilog Parser](https://github.com/MikePopoloski/slang)
 
 ## References
 

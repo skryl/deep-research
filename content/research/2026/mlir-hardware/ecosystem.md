@@ -19,17 +19,17 @@ Chisel is a hardware construction language embedded in Scala, and FIRRTL (Flexib
 4. Lowering converts `firrtl` to `hw` + `comb` + `seq` + `verif` + `ltl`
 5. Final emission produces SystemVerilog
 
-**Performance**: The MLIR-based FIRRTL Compiler (MFC) provides 10-100x speedup over the legacy Scala FIRRTL Compiler (SFC), thanks to C++ implementation and MLIR's efficient data structures. SiFive's `chisel-circt` library provides a drop-in replacement interface.
+**Performance**: The MLIR-based FIRRTL Compiler (MFC) provides 10-100x speedup over the legacy Scala FIRRTL Compiler (SFC), thanks to C++ implementation and MLIR's efficient data structures. SiFive's `chisel-circt`[^1] library provides a drop-in replacement interface.
 
 **Chipyard ecosystem**: The Chipyard SoC design framework (UC Berkeley) uses CIRCT as its compilation backend. Designs are elaborated in Chisel, compiled through `firtool`, and can be simulated via Arcilator, Verilator, or commercial tools.
 
 ### Zaozi — Direct MLIR Construction (2025)
 
-Presented at LATTE '25, Zaozi reinvents the Chisel concept in Scala 3 but directly constructs MLIR using CIRCT's C-API, bypassing the textual FIRRTL serialization step entirely. This eliminates serialization overhead and accelerates elaboration. Zaozi also introduces a sound, reference-based type system for Register, Wire, IO, and Probe, making the Scala runtime types immutable.
+Presented at LATTE '25, Zaozi[^2] reinvents the Chisel concept in Scala 3 but directly constructs MLIR using CIRCT's C-API, bypassing the textual FIRRTL serialization step entirely. This eliminates serialization overhead and accelerates elaboration. Zaozi also introduces a sound, reference-based type system for Register, Wire, IO, and Probe, making the Scala runtime types immutable.
 
 ### Amaranth HDL (formerly nMigen)
 
-Amaranth is a Python-based hardware definition language with its own toolchain. It currently targets:
+Amaranth[^7] is a Python-based hardware definition language with its own toolchain. It currently targets:
 - Yosys (open-source synthesis) via RTLIL
 - Vendor tools via generated Verilog
 
@@ -52,7 +52,7 @@ The hardware design ecosystem currently relies on **Verilog as the universal int
 
 ## ESI: Elastic Silicon Interconnect
 
-ESI is a CIRCT dialect (originally from Microsoft) that addresses the SoC interconnect problem.
+ESI[^5] is a CIRCT dialect (originally from Microsoft[^6]) that addresses the SoC interconnect problem.
 
 ### The Problem
 
@@ -74,7 +74,7 @@ ESI provides cosimulation endpoints that bridge hardware simulation (Arcilator) 
 
 ### AMD/Xilinx AIR Dialect
 
-AMD's AIR (AI Runtime) dialect targets their Versal AIE (AI Engine) architecture. It transforms `scf.for` loops into ping-pong buffering patterns for the AIE array, constructing dependency edges for concurrent communication and compute. The ARIES project (FPGA '25) builds on this for a unified MLIR-based AIE compilation flow.
+AMD's AIR (AI Runtime) dialect targets their Versal AIE (AI Engine) architecture. It transforms `scf.for` loops into ping-pong buffering patterns for the AIE array, constructing dependency edges for concurrent communication and compute. The ARIES project[^8] (FPGA '25) builds on this for a unified MLIR-based AIE compilation flow.
 
 ### dfg-mlir — Dataflow Graph Dialect
 
@@ -95,8 +95,8 @@ Google's XLS (eXtensible Language & Synthesis) is a separate HLS infrastructure 
 | Organization | Usage | Status |
 |-------------|-------|--------|
 | **SiFive** | CIRCT/firtool as the Chisel backend for RISC-V core design. Arcilator for simulation. VCIX dialect for custom AI accelerator targeting. | Production |
-| **Google** | MLIR widely deployed internally. Contributed to CIRCT's founding. XLS for internal HLS. | Production (MLIR); Research (CIRCT) |
-| **Microsoft** | ESI dialect development. FPGA-based accelerator flows. Hot Chips 2022 tutorial on CIRCT. | Research/Production |
+| **Google** | MLIR widely deployed internally[^4]. Contributed to CIRCT's founding. XLS for internal HLS. | Production (MLIR); Research (CIRCT) |
+| **Microsoft** | ESI dialect development. FPGA-based accelerator flows. Hot Chips 2022 tutorial on CIRCT[^3]. | Research/Production |
 | **AMD/Xilinx** | AIR dialect for Versal AIE. Participants in CIRCT weekly meetings. | Research/Production |
 | **Apple** | MLIR adoption (unspecified hardware applications). | Production (MLIR) |
 | **Intel** | MLIR adoption. | Production (MLIR) |
@@ -123,11 +123,11 @@ CIRCT/MLIR hardware work appears regularly at:
 - **HPCA**: ScaleHLS (2022)
 - **FPGA**: ARIES (2025), multiple HLS papers
 - **LATTE**: Workshop on languages, tools, and techniques for accelerator design (co-located with ASPLOS). Zaozi, JuliaHLS presented at LATTE '25.
-- **FOSDEM**: Open-source hardware track. NPU generation talk at FOSDEM 2026.
+- **FOSDEM**: Open-source hardware track. NPU generation talk at FOSDEM 2026[^9].
 - **Hot Chips**: SiFive/Microsoft CIRCT tutorial (2022)
 - **DAC**: ScaleHLS (2022), various MLIR-related papers
 - **C4ML**: PyTorch-to-Calyx (2026)
-- **FPGA Horizons London 2025**: Talk on MLIR/CIRCT reshaping FPGA compiler tools
+- **FPGA Horizons London 2025**[^10]: Talk on MLIR/CIRCT reshaping FPGA compiler tools
 
 ### Maturity Assessment (as of early 2026)
 
@@ -191,6 +191,19 @@ graph LR
 ```
 
 The Yosys/NextPNR open-source synthesis and place-and-route tools complete the picture for a fully open-source FPGA design flow. CIRCT handles the "front half" (design capture, optimization, verification, code generation) while Yosys/NextPNR handle the "back half" (synthesis, mapping, placement, routing).
+
+## Footnotes
+
+[^1]: [SiFive chisel-circt](https://github.com/sifive/chisel-circt)
+[^2]: [Zaozi: Reinvent Chisel in Scala 3 (LATTE '25)](https://capra.cs.cornell.edu/latte25/paper/12.pdf)
+[^3]: [Hot Chips 2022: CIRCT Tutorial](https://www.hc34.hotchips.org/assets/program/tutorials/MLIR/HC2022.SiFive-MSFT.LenharthDemme.v1.pdf)
+[^4]: [MLIR Users Page](https://mlir.llvm.org/users/)
+[^5]: [ESI Dialect](https://circt.llvm.org/docs/Dialects/ESI/)
+[^6]: [Microsoft ESI GitHub](https://github.com/microsoft/Elastic-Silicon-Interconnect)
+[^7]: [Amaranth HDL](https://github.com/amaranth-lang/amaranth)
+[^8]: [ARIES FPGA '25](https://www.csl.cornell.edu/~zhiruz/pdfs/aries-fpga2025.pdf)
+[^9]: [FOSDEM 2026: NPU Generation from Linalg](https://fosdem.org/2026/schedule/event/GTQRZE-programmable-npu-generation-from-linalg-mlir-circt/)
+[^10]: [FPGA Horizons London 2025](https://www.fpgahorizons.com/london-25/london-25-talks/)
 
 ## References
 
