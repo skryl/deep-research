@@ -151,3 +151,13 @@ CIRCT's adoption extends beyond its direct contributors:
 - **OpenTitan**: Google's open-source silicon root of trust project has used CIRCT for formal verification
 - **CHIPS Alliance**: Industry consortium that supports CIRCT-adjacent projects
 - **Academic research**: Multiple research groups build on CIRCT for simulation, verification, and HLS research
+
+## References
+
+- [CIRCT GitHub Repository](https://github.com/llvm/circt)
+- [CIRCT Contributors](https://github.com/llvm/circt/graphs/contributors)
+- [LLVM Discourse — CIRCT Category](https://discourse.llvm.org/c/circt/)
+- [LLVM Governance](https://llvm.org/docs/GoverningBoard.html)
+- [CHIPS Alliance](https://chipsalliance.org/)
+- [Chipyard SoC Framework](https://chipyard.readthedocs.io/)
+- [OpenTitan Project](https://opentitan.org/)

@@ -192,22 +192,21 @@ Metadata and configuration objects that travel alongside hardware descriptions b
 
 ## Dialect Relationships and Lowering Paths
 
-```
-   firrtl ──────────────────┐
-   moore ───────────────────┤
-   calyx ───────────────────┤
-   handshake ───────────────┤
-   pipeline ────────────────┤
-                            ▼
-                    hw + comb + seq
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-          sv + emit      arc → llvm     smt
-              │             │             │
-              ▼             ▼             ▼
-        SystemVerilog   Simulation    Formal
-          output        binary      verification
+```mermaid
+graph TD
+    firrtl --> core["hw + comb + seq"]
+    moore --> core
+    calyx --> core
+    handshake --> core
+    pipeline --> core
+
+    core --> sv["sv + emit"]
+    core --> arc["arc → llvm"]
+    core --> smt
+
+    sv --> SV["SystemVerilog output"]
+    arc --> Sim["Simulation binary"]
+    smt --> FV["Formal verification"]
 ```
 
 Multiple input representations all converge on the core `hw`/`comb`/`seq` representation, which then fans out to different backends: SystemVerilog emission, simulation compilation, or formal verification.

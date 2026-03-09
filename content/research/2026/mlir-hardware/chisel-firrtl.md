@@ -10,8 +10,9 @@ weight: 4
 
 **FIRRTL** (Flexible Intermediate Representation for RTL) is the intermediate representation emitted by Chisel. The original compilation flow was:
 
-```
-Chisel (Scala) → FIRRTL IR (.fir file) → Scala FIRRTL Compiler (SFC) → Verilog
+```mermaid
+graph LR
+    A["Chisel (Scala)"] --> B["FIRRTL IR (.fir file)"] --> C["Scala FIRRTL Compiler (SFC)"] --> D["Verilog"]
 ```
 
 The Scala FIRRTL Compiler (SFC) was a compiler written in Scala that performed width inference, type checking, optimization passes, and Verilog emission. While functional, the SFC had significant limitations as designs grew larger.
@@ -63,25 +64,18 @@ As of Chisel 5.x, **firtool is the default and recommended FIRRTL compiler**. Th
 
 ### Compilation Flow
 
-```
-Chisel 5 (Scala)
-    │
-    ├─ Chisel compiler emits FIRRTL (.fir) or CHIRRTL
-    │
-    ▼
-firtool (CIRCT)
-    │
-    ├─ Parse FIRRTL → firrtl.circuit MLIR
-    ├─ Width inference, reset inference
-    ├─ Module deduplication, inlining
-    ├─ Lower types (bundles/vectors → ground types)
-    ├─ Lower FIRRTL → HW + Comb + Seq
-    ├─ HW optimization passes
-    ├─ Lower to SV
-    ├─ Verilog emission
-    │
-    ▼
-SystemVerilog output
+```mermaid
+graph TD
+    A["Chisel 5 (Scala)"] -->|"Emits FIRRTL (.fir) or CHIRRTL"| B["firtool (CIRCT)"]
+    B --> C["Parse FIRRTL → firrtl.circuit MLIR"]
+    C --> D["Width inference, reset inference"]
+    D --> E["Module deduplication, inlining"]
+    E --> F["Lower types (bundles/vectors → ground types)"]
+    F --> G["Lower FIRRTL → HW + Comb + Seq"]
+    G --> H["HW optimization passes"]
+    H --> I["Lower to SV"]
+    I --> J["Verilog emission"]
+    J --> K["SystemVerilog output"]
 ```
 
 ### Integration Mechanisms
@@ -134,3 +128,13 @@ While Chisel is the primary producer of FIRRTL, the FIRRTL format is designed as
 - **PyRTL** — a Python-based hardware description framework
 - **ESSENT** — a high-performance simulator that consumes FIRRTL directly
 - **Custom generators** — any tool can emit `.fir` files for processing by firtool
+
+## References
+
+- [Chisel GitHub Repository](https://github.com/chipsalliance/chisel)
+- [Chisel Documentation](https://www.chisel-lang.org/)
+- [FIRRTL Specification](https://github.com/chipsalliance/firrtl-spec)
+- [FIRRTL Dialect Rationale](https://circt.llvm.org/docs/Dialects/FIRRTL/RationaleFIRRTL/)
+- [SiFive chisel-circt](https://github.com/sifive/chisel-circt)
+- [Chipyard SoC Framework](https://chipyard.readthedocs.io/)
+- [CIRCT Project](https://circt.llvm.org/)

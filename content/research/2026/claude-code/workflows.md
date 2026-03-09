@@ -125,3 +125,10 @@ You can also be explicit: "use a sub-agent to investigate the auth module while 
 6. **Use `/compact`** — before shifting focus to a new area of the codebase
 7. **Use plan mode** — for complex tasks, have Claude plan first, then execute
 8. **Leverage skills** — create reusable workflows for common tasks (deploy, review, etc.)
+
+## References
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code CLI Usage](https://docs.anthropic.com/en/docs/claude-code/cli-usage)
+- [Claude Code Best Practices](https://docs.anthropic.com/en/docs/claude-code/best-practices)
+- [Claude Code GitHub Action](https://github.com/anthropics/claude-code-action)

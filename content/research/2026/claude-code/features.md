@@ -216,3 +216,12 @@ claude --chrome
 ```
 
 Enables browser control for web testing, form filling, and debugging web applications.
+
+## References
+
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/cli-usage#slash-commands)
+- [Claude Code Permissions](https://docs.anthropic.com/en/docs/claude-code/security#permissions)
+- [Claude Code Memory (CLAUDE.md)](https://docs.anthropic.com/en/docs/claude-code/memory)
+- [Claude Code IDE Integrations](https://docs.anthropic.com/en/docs/claude-code/ide-integrations)
+- [Claude Code Skills](https://docs.anthropic.com/en/docs/claude-code/skills)

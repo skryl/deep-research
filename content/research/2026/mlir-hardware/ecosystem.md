@@ -153,23 +153,41 @@ CIRCT/MLIR hardware work appears regularly at:
 
 CIRCT/MLIR sits at the center of a broader open-source hardware ecosystem:
 
-```
-  Design Languages          Compilation              Synthesis & PnR
-  ─────────────────        ──────────────           ─────────────────
-  Chisel ──────────┐       ┌──────────┐            ┌───────────────┐
-  SystemVerilog ───┼──────>│  CIRCT   │───────────>│ Yosys         │
-  Calyx (HLS) ─────┤       │  (MLIR)  │  Verilog  │ (synthesis)   │
-  Dynamatic (HLS) ─┤       └──────────┘            └───────┬───────┘
-  Julia (HLS) ─────┘              │                        │
-                           Arcilator (sim)          ┌──────┴────────┐
-                           circt-bmc (verify)       │ NextPNR       │
-                           circt-lec (equiv)        │ (place&route) │
-                                                    └───────────────┘
-                                                           │
-                                                    ┌──────┴────────┐
-                                                    │ FPGA Bitstream│
-                                                    │ or ASIC GDSII │
-                                                    └───────────────┘
+```mermaid
+graph LR
+    subgraph Design Languages
+        Chisel
+        SV["SystemVerilog"]
+        Calyx["Calyx (HLS)"]
+        Dyn["Dynamatic (HLS)"]
+        Jul["Julia (HLS)"]
+    end
+
+    subgraph Compilation
+        CIRCT["CIRCT (MLIR)"]
+        Arc["Arcilator (sim)"]
+        BMC["circt-bmc (verify)"]
+        LEC["circt-lec (equiv)"]
+    end
+
+    subgraph "Synthesis & PnR"
+        Yosys["Yosys (synthesis)"]
+        NextPNR["NextPNR (place & route)"]
+        Output["FPGA Bitstream / ASIC GDSII"]
+    end
+
+    Chisel --> CIRCT
+    SV --> CIRCT
+    Calyx --> CIRCT
+    Dyn --> CIRCT
+    Jul --> CIRCT
+
+    CIRCT --> Arc
+    CIRCT --> BMC
+    CIRCT --> LEC
+    CIRCT -->|"Verilog"| Yosys
+    Yosys --> NextPNR
+    NextPNR --> Output
 ```
 
 The Yosys/NextPNR open-source synthesis and place-and-route tools complete the picture for a fully open-source FPGA design flow. CIRCT handles the "front half" (design capture, optimization, verification, code generation) while Yosys/NextPNR handle the "back half" (synthesis, mapping, placement, routing).

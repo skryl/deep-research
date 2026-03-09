@@ -231,3 +231,12 @@ ninja firtool circt-opt circt-translate
 ```
 
 CIRCT requires a C++17 compiler, CMake 3.13.4+, Python 3, and Ninja. The LLVM submodule pins the exact LLVM/MLIR version tested with the current CIRCT release.
+
+## References
+
+- [CIRCT GitHub Repository](https://github.com/llvm/circt)
+- [CIRCT Getting Started](https://circt.llvm.org/docs/GettingStarted/)
+- [firtool Documentation](https://circt.llvm.org/docs/Tools/firtool/)
+- [CIRCT Passes](https://circt.llvm.org/docs/Passes/)
+- [Slang SystemVerilog Parser](https://github.com/MikePopoloski/slang)
+- [FIRRTL Dialect Rationale](https://circt.llvm.org/docs/Dialects/FIRRTL/RationaleFIRRTL/)
