@@ -82,3 +82,43 @@ Critics on LessWrong and elsewhere note a recurring pattern: Marcus demonstrates
 Marcus argues that LLMs traffic only in statistics of language without explicit representation of facts and explicit tools to reason over those facts. He claims there is "no principled solution to hallucinations" in such systems.
 
 **Assessment (March 2026)**: The strong version ("never will be") remains unfalsifiable on current timelines. The weaker version -- that current LLMs lack genuine understanding -- aligns with findings from Apple's "GSM-Symbolic" paper and ongoing reliability issues. However, the boundary between "genuine understanding" and "sufficiently good pattern matching" remains philosophically contested.
+
+---
+
+## Compositionality and Systematic Generalization
+
+**Sources**: *The Algebraic Mind* (2001); ["In defense of skepticism about deep learning"](https://medium.com/@GaryMarcus/in-defense-of-skepticism-about-deep-learning-6e8bfd5ae0f1) (2018); NYU debate with Yann LeCun (October 2017)
+
+Marcus has argued since at least 2001 that neural networks fail at systematic compositional generalization -- the ability to combine known concepts in novel ways (e.g., understanding "the dog bit the man" and "the man bit the dog" as different). Key claims:
+
+| Claim | Assessment (March 2026) |
+|-------|------------------------|
+| Neural networks fail at systematic compositional generalization | **PARTIALLY CORRECT** -- Modern LLMs show improved compositionality vs. 2017-era models but still fail on out-of-distribution compositional tasks |
+| AI needs innate structure, not just learning from data | **INCREASINGLY SUPPORTED** -- LeCun's own JEPA architecture now includes distinct innate modules |
+| Explicit representations of variables and operations are needed | **PARTIALLY VINDICATED** -- Chain-of-thought, code generation, and tool-use all add more explicit structure |
+
+---
+
+## "Rebooting AI" (2019 Book)
+
+**Source**: [*Rebooting AI: Building Artificial Intelligence We Can Trust*](https://www.amazon.com/Rebooting-AI-Building-Artificial-Intelligence/dp/1524748250) (with Ernest Davis)
+
+Written before the GPT-3/ChatGPT era, this book made several predictions that can now be evaluated:
+
+| Claim | Assessment (March 2026) |
+|-------|------------------------|
+| Current AI approaches are too narrow for genuine intelligence | **CORRECT** -- no general-purpose AI exists |
+| Deep learning alone won't get us to AGI | **CONSENSUS GROWING** -- even LeCun now argues LLMs alone are insufficient |
+| Common sense and deep understanding are essential and missing | **CORRECT** -- LLMs still lack robust common sense reasoning |
+| Hybrid (neurosymbolic) approaches will be needed | **ON TRACK** -- RAG, tool-use, structured reasoning are now mainstream |
+| AI hype is overblown relative to actual capabilities | **LARGELY CORRECT** -- significant gap between marketing and deployment reality |
+
+---
+
+## "GPT-5" Predictions (2025)
+
+**Source**: [What to Expect When You're Expecting... GPT-5](https://garymarcus.substack.com/p/what-to-expect-when-youre-expecting-62e)
+
+Marcus recycled his seven GPT-4 predictions nearly word-for-word, search-and-replacing "GPT-4" with "GPT-5." When GPT-5 launched in August 2025, he wrote: "within hours, people were posting the usual ridiculous errors." The day was dubbed **"Gary Marcus Day"** online, as his predictions again proved largely accurate.
+
+**Assessment**: The recycling strategy itself was a prediction -- that each new model would exhibit the same fundamental limitations. This meta-prediction has held up across GPT-3.5, GPT-4, GPT-4o, and GPT-5, even as each model improved incrementally on its predecessors.
