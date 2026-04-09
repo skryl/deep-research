@@ -116,6 +116,41 @@ Remote connections use `wss://` for security, with `ws://` only allowed for loop
 
 Theme configuration for code highlighting is applied from the final configuration (post-onboarding), ensuring user preferences are respected.
 
+### ChatWidget
+
+The central `ChatWidget` manages the conversation display:
+
+- **Dual-layer transcript** — Committed cells (finalized turns) + in-flight active cell (streaming tokens)
+- **Two independent stream controllers** for assistant output and plan content
+- **Adaptive chunking** for rendering performance with large outputs
+- **Multi-agent collaboration** support with agent-specific display
+- **Rate-limit warning escalation** at 75%, 90%, and 95% thresholds
+- **Message composition** with local/remote image attachments, mentions, and byte-range tracking
+
+### Chat Composer
+
+The text input is a state machine (`chat_composer.rs`) with:
+
+| Feature | Implementation |
+|---------|---------------|
+| **Slash commands** | Popup menu with fuzzy matching |
+| **File search** | Inline file picker popup |
+| **Skill mentions** | `@skill` references |
+| **Cross-session history** | Input history persists between sessions |
+| **Paste handling** | Bracketed paste, burst detection, large paste (>1000 chars) as placeholders |
+| **Character limits** | Validation with visual feedback |
+| **Remote images** | `[Image #N]` placeholder rows |
+
+### Exec Cell Rendering
+
+Command execution results are displayed with structured rendering:
+
+- **Exploring mode** — Parsed command breakdown with syntax highlighting
+- **Command mode** — Full output with truncation
+- `truncate_lines_middle()` — Measures actual viewport rows via `Paragraph::line_count` to handle wrapped URLs
+- Visual prefixes: `|` for continuation, `\` for output boundaries
+- Layout allocation: 2 lines for commands, 5 lines for output
+
 ## Headless Exec Mode (codex-exec)
 
 ### Purpose

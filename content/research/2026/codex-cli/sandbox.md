@@ -119,7 +119,22 @@ Landlock[^5] provides kernel-level filesystem access control as an additional la
 
 ## Windows Sandbox
 
-Windows sandboxing uses restricted process tokens to limit the child process's capabilities. The implementation lives in `codex-core`'s `windows_sandbox` module.
+Windows sandboxing uses restricted process tokens to limit the child process's capabilities. The implementation lives in `codex-core`'s `windows_sandbox` module and the `codex_windows_sandbox` crate.
+
+### Backends
+
+| Backend | Mechanism |
+|---------|-----------|
+| **Restricted token** | Process spawned with reduced privileges via Windows security tokens |
+| **Elevated** | For operations requiring specific elevated permissions |
+
+### Filesystem Overlay
+
+Windows sandbox supports **ACL-based filesystem overlay** — rather than namespace isolation (like Bubblewrap on Linux), Windows uses Access Control Lists to restrict which directories the sandboxed process can read/write.
+
+### Windows Sandbox NUX
+
+A first-run experience ("NUX" — New User Experience) prompts users about Windows Sandbox configuration only after the initial trust decision has been made, ensuring users understand the security implications before sandbox mode is enabled.
 
 ## Sandbox Manager
 
@@ -179,6 +194,30 @@ Three pre-configured sandbox modes are available via the `--sandbox` CLI flag:
 | `danger-full-access` | Full read/write | Full access | Trusted environments |
 
 Additionally, `ExternalSandbox` mode defers all sandboxing to an external tool (e.g., Docker), disabling Codex's built-in isolation.
+
+## Sandbox ↔ Exec Integration
+
+The `ExecRequest` struct in `codex-core` ties the sandbox and execution systems together:
+
+```
+ExecRequest {
+    command: Vec<String>,
+    cwd: AbsolutePathBuf,
+    env: HashMap<String, String>,
+    network: Option<NetworkProxy>,
+    expiration: ExecExpiration,
+    capture_policy: ExecCapturePolicy,
+    sandbox_type: SandboxType,
+    sandbox_policy: SandboxPolicy,
+    filesystem_policy: FilesystemPolicy,
+    network_policy: NetworkPolicy,
+    windows_sandbox_level: WindowsSandboxLevel,
+    windows_sandbox_private_desktop: bool,
+    arg0: Option<String>,  // argv[0] override for sandbox wrappers
+}
+```
+
+The `SandboxType` selection flows through `SandboxManager::select_initial()`, which considers the filesystem policy, network policy, and platform capabilities. The sandbox is selected once at session start and reused for all command executions within that session, unless the user changes the sandbox policy via dynamic configuration.
 
 ## Footnotes
 

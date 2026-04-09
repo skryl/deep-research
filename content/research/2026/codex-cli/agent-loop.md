@@ -118,38 +118,151 @@ Model response parsed
 
 ### Command Execution Details
 
-Commands are spawned asynchronously via `spawn_child_async()`:
+The `exec.rs` module (~800 lines) manages command spawning with these key constants:
 
-| Parameter | Description |
-|-----------|-------------|
-| Program + args | The command to execute |
-| Working directory | Inherited from session or overridden |
-| Environment | User env with sandbox additions |
-| Network policy | Passed to sandbox layer |
-| Stdio policy | Piped for capture |
+```
+DEFAULT_EXEC_COMMAND_TIMEOUT_MS  = 10,000   (10 seconds)
+READ_CHUNK_SIZE                  = 8,192    (8 KB)
+EXEC_OUTPUT_MAX_BYTES            = ~1 MiB
+MAX_EXEC_OUTPUT_DELTAS_PER_CALL  = 10,000
+IO_DRAIN_TIMEOUT_MS              = 2,000    (2 seconds)
+```
+
+Commands are spawned via `spawn_child_async()` using the `ExecParams` struct:
+
+| Field | Description |
+|-------|-------------|
+| `command` | Program + arguments vector |
+| `cwd` | Absolute working directory path |
+| `expiration` | Timeout, DefaultTimeout, or CancellationToken |
+| `capture_policy` | ShellTool (capped) or FullBuffer (uncapped) |
+| `env` | Environment variable overrides |
+| `network` | Optional network proxy configuration |
+| `sandbox_permissions` | Filesystem/network sandbox policies |
+| `arg0` | Optional argv[0] override (for sandbox wrappers) |
+
+**Execution flow:**
+
+1. `process_exec_tool_call()` — Entry point, builds `ExecRequest`
+2. `build_exec_request()` — Selects sandbox type, transforms command through `SandboxManager`
+3. `exec()` — Spawns child process, calls `consume_output()`
+4. `consume_output()` — Reads stdout/stderr in parallel via `tokio::spawn`, races against expiration
+5. `finalize_exec_result()` — Detects sandbox denials, handles timeout exit codes
 
 **Output capture** reads in 8KB chunks with byte caps:
-- **ShellTool policy**: 256KB output cap, timeout-based expiration
-- **FullBuffer policy**: Complete output, no caps
+- **ShellTool policy**: ~1 MiB output cap, timeout-based expiration
+- **FullBuffer policy**: Complete output, no caps or forced expiration
 
 **Timeout management** uses three expiration mechanisms:
 - Fixed timeout (default: 10 seconds for shell tool)
 - External cancellation token (user interrupt)
 - Default fallback (10,000ms)
 
-On timeout, the entire process group is killed with a synthetic exit code 64 and `timed_out: true` flag.
+On timeout, the entire process group is killed with a synthetic exit code 192 (128+64) and `timed_out: true` flag.
 
 **Output aggregation** splits capacity between stdout (1/3) and stderr (2/3), with unused capacity rebalanced across streams.
 
+**Sandbox denial detection** (`is_likely_sandbox_denied()`) checks for:
+- Keywords: "operation not permitted", "permission denied", "read-only file system", "seccomp", "sandbox", "landlock"
+- Quick-rejects exit codes 2, 126, 127
+- On Linux: checks for SIGSYS (seccomp violation)
+
+### Unified Exec (Interactive Process Manager)
+
+Beyond single-shot command execution, the `UnifiedExecProcessManager` manages **concurrent interactive processes** with PTY-based spawning:
+
+| Constant | Value |
+|----------|-------|
+| Max processes | 64 (warning at 60) |
+| Output cap | ~1 MiB (~2,500 tokens) |
+| Yield time | 250ms to 30s |
+| LRU protection | 8 most recent processes |
+
+Each `UnifiedExecProcess` wraps either a local PTY session or a remote exec-server process. Features include:
+
+- **HeadTailBuffer** — Splits buffer capacity 50/50 between head (prefix) and tail (suffix). When capacity is exceeded, bytes are dropped from the middle, preserving both the beginning and end of output.
+- **Broadcast channels** for streaming output to multiple consumers
+- **150ms grace period** for early exit detection before declaring a process started
+- **LRU-based pruning** — When nearing the 64-process limit, oldest processes are killed (protecting the 8 most recent)
+- **Deterministic process IDs** for testing
+
+### Output Encoding
+
+The `exec_output` module handles smart encoding detection:
+
+1. Try UTF-8 first
+2. Fall back to `chardetng` for legacy Windows code pages (CP1251, CP866, Windows-1252)
+3. Handle IBM866/Windows-1252 collision by preferring Windows-1252 when bytes match smart-punctuation patterns
+
+Output is structured as `ExecToolCallOutput`:
+
+```
+ExecToolCallOutput {
+    exit_code: i32,
+    stdout: StreamOutput<String>,    // with truncated_after_lines
+    stderr: StreamOutput<String>,
+    aggregated_output: StreamOutput<String>,
+    duration: Duration,
+    timed_out: bool,
+}
+```
+
 ## Patch Application
 
-File modifications use a structured patch format rather than raw file writes:
+File modifications use a **custom, simplified diff format** (not standard unified diff) implemented in the `apply-patch` crate[^3]. The format is designed for LLM generation reliability.
 
-1. Model generates a diff description (files to modify, changes to make)
-2. `ApplyPatchApprovalRequestEvent` is created with the change map
-3. Approval pipeline evaluates (sandbox policy, user approval)
-4. On approval, patches are applied atomically
+### Patch Grammar
+
+```
+start:      begin_patch hunk+ end_patch
+begin_patch: "*** Begin Patch" LF
+end_patch:   "*** End Patch" LF?
+hunk:        add_hunk | delete_hunk | update_hunk
+
+add_hunk:    "*** Add File: " filename LF add_line+
+delete_hunk: "*** Delete File: " filename LF
+update_hunk: "*** Update File: " filename LF change_move? change?
+
+change_move: "*** Move to: " filename LF
+change:      (change_context | change_line)+ eof_line?
+change_context: ("@@" | "@@ " /(.+)/) LF
+change_line:    ("+" | "-" | " ") /(.+)/ LF
+eof_line:       "*** End of File" LF
+```
+
+### Hunk Types
+
+| Marker | Operation | Data |
+|--------|-----------|------|
+| `*** Add File: <path>` | Create new file | Lines to write |
+| `*** Delete File: <path>` | Remove file | None |
+| `*** Update File: <path>` | Modify existing file | Context + changes |
+| `*** Move to: <path>` | Rename/move file | Combined with update |
+
+### Application Pipeline
+
+1. `parse_patch()` — Parses text into `Vec<Hunk>` using the grammar above
+2. `apply_hunks_to_files()` — Iterates hunks, applies each to the filesystem
+3. For `UpdateFile` hunks: `derive_new_contents_from_chunks()` reads the original, calls `compute_replacements()` to locate old lines, then `apply_replacements()` in reverse order
+4. `ApplyPatchApprovalRequestEvent` gates the operation through the approval pipeline
 5. Session-level write grants can pre-approve directories
+
+### Four-Pass Context Matching
+
+The `seek_sequence` module finds context lines within files using progressively looser matching:
+
+| Pass | Strategy | Example |
+|------|----------|---------|
+| 1 | **Exact match** | Direct string equality |
+| 2 | **Right-trim** | `trim_end()` on both sides |
+| 3 | **Full trim** | `trim()` on both sides |
+| 4 | **Unicode normalization** | Smart quotes → ASCII quotes, em dashes → hyphens, NBSP → space |
+
+When `eof=true`, search starts from the end of file. This graduated approach handles the common case where LLMs introduce minor whitespace or Unicode variations in context lines.
+
+### Lenient Mode
+
+`PARSE_IN_STRICT_MODE = false` by default. Lenient mode strips heredoc wrappers (`<<EOF` / `<<'EOF'` / `<<"EOF"`) because GPT-4.1 sometimes generates them in its `local_shell` tool call format. File references must use **relative paths only**.
 
 ## Multi-Turn Reasoning
 
@@ -220,6 +333,7 @@ The `CodexStatus` enum tracks running state: `Running` or `InitiateShutdown`.
 
 [^1]: [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses)
 [^2]: [ReAct Pattern](https://arxiv.org/abs/2210.03629)
+[^3]: [Codex apply-patch Crate](https://github.com/openai/codex/tree/main/codex-rs/apply-patch)
 
 ## References
 

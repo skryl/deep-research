@@ -148,6 +148,44 @@ Each turn carries embedded context:
 
 A `ReadinessFlag` gates tool execution during initialization. Tools cannot run until all startup tasks (MCP connections, config loading, etc.) complete. This prevents race conditions where the agent might try to execute commands before the sandbox is configured.
 
+## Model Management
+
+The `models-manager` crate[^3] handles model discovery, configuration, and routing.
+
+### ModelsManager
+
+The `ModelsManager` coordinates remote model discovery with caching:
+
+| Strategy | Behavior |
+|----------|----------|
+| `Online` | Fetch latest model catalog from API |
+| `Offline` | Use only cached/bundled data |
+| `OnlineIfUncached` | Fetch only if no local cache exists |
+
+**Catalog modes:**
+- **Default** — Bundled model info merged with remote updates
+- **Custom** — Caller-provided, immutable catalog (for testing or embedded use)
+
+Model resolution uses **longest-prefix matching** for namespaced identifiers (e.g., `namespace/model-name`), with ETag and TTL-based cache management.
+
+### Model Info and Overrides
+
+The `model_info_from_slug()` function creates fallback configurations for unknown models:
+
+| Default | Value |
+|---------|-------|
+| Context window | 272,000 tokens |
+| Truncation | 10,000 bytes |
+| Effective utilization | 95% of context |
+| Web search | Text-based |
+| Parallel tool calls | Disabled |
+
+`with_config_overrides()` applies user settings: reasoning summaries, context windows, token limits, and personality. The system supports personality variants (e.g., "friendly" vs "pragmatic" for specific model slugs).
+
+### Dynamic Catalog
+
+Hardcoded model presets have been **removed** in favor of dynamically derived listings from an active catalog. Only legacy migration config keys remain for upgrade prompts between model generations.
+
 ## Observability
 
 The system uses multi-layer tracing:
@@ -166,6 +204,7 @@ Session events are logged to both JSONL rollout files and a SQLite database for 
 
 [^1]: [Codex Cargo.toml](https://github.com/openai/codex/blob/main/codex-rs/Cargo.toml)
 [^2]: [Codex AGENTS.md — Crate Conventions](https://github.com/openai/codex/blob/main/AGENTS.md)
+[^3]: [Codex models-manager Crate](https://github.com/openai/codex/tree/main/codex-rs/models-manager)
 
 ## References
 

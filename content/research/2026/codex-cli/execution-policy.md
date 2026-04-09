@@ -69,6 +69,16 @@ Two blocking functions handle runtime amendments:
 - `blocking_append_allow_prefix_rule()` — Add a command prefix allowlist entry
 - `blocking_append_network_rule()` — Add a network access rule
 
+### ExecPolicyManager
+
+The `ExecPolicyManager` uses `ArcSwap<Policy>` for **lock-free policy updates**, allowing the policy to be amended without blocking concurrent evaluations:
+
+- Evaluates commands as `Allow`, `Prompt`, or `Forbidden`
+- Parses shell commands (including heredocs) for policy matching
+- Derives policy amendments to prevent future prompts for similar commands
+- Maintains a **banned prefix list** — commands starting with `python`, `bash`, `sudo`, etc. cannot be auto-approved via prefix rules (they require per-invocation approval)
+- Bridges to sandbox policies for filesystem/network gating
+
 ## Approval Pipeline
 
 The approval system is a multi-stage pipeline, with each stage either approving, denying, or escalating to the next:
@@ -87,7 +97,28 @@ If no rule matches, the command escalates to the next stage.
 
 ### Stage 2: Guardian Assessment
 
-The Guardian is a risk classification system that evaluates commands before user approval:
+The Guardian is an **AI-powered safety layer**[^3] that reviews approval requests using a dedicated model call. It is itself an agent session with restricted permissions — a safety reviewer reviewing the primary agent's actions.
+
+**Guardian review orchestration** (`run_guardian_review()`):
+
+1. Creates a sandboxed review session with `approval_policy = never` (prevents recursive approvals)
+2. Serializes the `GuardianApprovalRequest` to JSON with recursive string truncation for large payloads
+3. Calls a dedicated model (with low reasoning effort when available), falling back to the current turn's model
+4. Streams progress events (`GuardianAssessmentStatus::InProgress`)
+5. **Fail-safe default**: Timeouts, errors, and parse failures all result in **high-risk denial**
+6. Rejection messages include anti-circumvention instructions
+
+**Review session management** (`GuardianReviewSessionReuseKey`):
+
+| Behavior | Description |
+|----------|-------------|
+| **Trunk session** | Persistent review session reused when config is stable |
+| **Ephemeral session** | Temporary session when configuration has changed |
+| **Timeout racing** | `tokio::select!` races timeout, cancellation, and completion |
+
+The review session disables: spawn CSV, collaboration, web search. It enforces read-only sandbox and "Never" approval behavior to prevent the reviewer from taking actions.
+
+**Risk classification output**:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -96,12 +127,13 @@ The Guardian is a risk classification system that evaluates commands before user
 | `status` | `GuardianAssessmentStatus` | InProgress, Approved, Denied, Aborted |
 | `rationale` | `String` | Explanation of the assessment |
 
-Guardian assessments cover multiple action types via `GuardianAssessmentAction`:
+Guardian assessments cover multiple action types via `GuardianApprovalRequest`:
 
 | Action Variant | What's Assessed |
 |---------------|----------------|
 | `Command` | Shell command execution |
-| `Execve` | Direct process execution |
+| `ExecCommand` | Structured command execution |
+| `Execve` | Direct process execution (Unix only) |
 | `ApplyPatch` | File modification |
 | `NetworkAccess` | Network connection |
 | `McpToolCall` | MCP server tool invocation |
@@ -179,6 +211,28 @@ ElicitationAction {
 
 This allows MCP servers to request user input (e.g., OAuth consent) through the approval pipeline.
 
+## TUI Approval Overlay
+
+In the interactive TUI, approvals are presented through a dedicated overlay (`approval_overlay.rs`) that handles four request types:
+
+| Request Type | Content Shown |
+|-------------|---------------|
+| Exec | Command to execute, working directory |
+| Permissions | Filesystem/network grants requested |
+| ApplyPatch | File changes with diff view |
+| McpElicitation | MCP server information request |
+
+**Keyboard shortcuts** in the approval overlay:
+
+| Key | Action |
+|-----|--------|
+| `y` | Approve |
+| `n` | Deny |
+| `a` | Always allow (add prefix rule) |
+| `Enter` | Confirm selection |
+| `Escape` | Cancel/dismiss |
+| `Ctrl+A` | Toggle full-screen view of the request |
+
 ## Headless Mode
 
 In `codex exec` (headless) mode, the approval policy defaults to `AskForApproval::Never`:
@@ -219,6 +273,7 @@ EscalationPermissions {
 
 [^1]: [Codex execpolicy Crate](https://github.com/openai/codex/tree/main/codex-rs/execpolicy)
 [^2]: [Codex Protocol — Approvals](https://github.com/openai/codex/tree/main/codex-rs/protocol/src/approvals.rs)
+[^3]: [Codex Guardian Review](https://github.com/openai/codex/tree/main/codex-rs/core/src/guardian)
 
 ## References
 
