@@ -43,3 +43,4 @@ OpenAI's Codex CLI[^1] is an open-source, terminal-based coding agent that runs 
 | [sandbox](research/2026/codex-cli/sandbox) | Platform-specific sandboxing: Seatbelt, Bubblewrap, Landlock, seccomp, and Windows |
 | [execution-policy](research/2026/codex-cli/execution-policy) | Approval pipeline, prefix rules, network policies, and Guardian risk assessment |
 | [terminal-ui](research/2026/codex-cli/terminal-ui) | Ratatui TUI, event processing, session management, and headless exec mode |
+| [typescript-era](research/2026/codex-cli/typescript-era) | Original TypeScript/Ink implementation, approval system, config, and migration to Rust |
