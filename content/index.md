@@ -15,3 +15,4 @@ A collection of deep dives on various topics, organized by date.
 | 2026-03-25 | [Transformer VM](research/2026/transformer-vm) | Analytically-constructed transformer that simulates a WebAssembly VM — computation graph DSL, MILP scheduling, O(log n) hull cache, and Futamura projection |
 | 2026-04-09 | [Claw Code Agent](research/2026/claw-code-agent) | Python reimplementation of Claude Code's agent architecture — local models, zero dependencies, 60+ tools, plugin system, MCP runtime, and bash security |
 | 2026-04-09 | [OpenAI Codex CLI](research/2026/codex-cli) | OpenAI's open-source coding agent — Rust crate architecture, sandbox system (Seatbelt, Bubblewrap, Landlock), execution policy engine, and Ratatui TUI |
+| 2026-04-10 | [Pi Mono](research/2026/pi-mono) | AI agent toolkit monorepo — unified LLM API with 17 providers, two-loop agent runtime, coding CLI with JSONL session trees, differential-rendering TUI, and context compaction |
