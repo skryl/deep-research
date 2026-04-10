@@ -171,6 +171,10 @@ The `buildSystemPrompt()` function dynamically assembles the system prompt:
 
 When a custom prompt is provided, the template is skipped and only context files, skills, and metadata are appended.
 
+### AGENTS.md / CLAUDE.md Support
+
+The system automatically loads project instructions from `AGENTS.md` or `CLAUDE.md` files found by walking up the directory tree from the working directory. These files are appended to the system prompt as project context, enabling per-project customization without explicit configuration.
+
 ## Extension System
 
 Extensions are loaded from user (`~/.pi/agent/`) or project (`./.pi/agent/`) directories through a three-module architecture:

@@ -52,13 +52,35 @@ Slack Workspace
 | `chalk` | Terminal output formatting |
 | `diff` | Text diffing for code change visualization |
 
-### Capabilities
+### Self-Managing Architecture
 
-- Routes Slack messages to the coding agent as prompts
-- Returns agent responses as Slack messages with code formatting
-- Uses Anthropic's sandbox runtime for safe code execution within Slack
-- Supports scheduled operations via cron expressions
-- Invoked via the `mom` CLI command
+What makes pi-mom distinctive is that the bot is **self-managing** — it installs its own tools, writes its own automation scripts ("skills"), and configures credentials autonomously. Zero manual setup beyond providing Slack tokens.
+
+### Per-Channel Isolation
+
+Each Slack channel gets its own isolated context:
+
+| Resource | Scope |
+|----------|-------|
+| Conversation context | Per-channel |
+| Memory (`MEMORY.md`) | Per-channel + global |
+| Working directory | Per-channel |
+| Skills | Per-channel |
+
+### Dual History System
+
+| File | Purpose |
+|------|---------|
+| `log.jsonl` | Append-only source of truth for all messages |
+| `context.jsonl` | What the LLM actually sees, subject to compaction |
+
+### Event Scheduling
+
+The bot supports scheduled wake-ups via JSON files with three trigger types: immediate, one-shot (future timestamp), and periodic (cron-based via the `croner` library).
+
+### Security
+
+Docker sandboxing is recommended for tool execution — the bot can execute arbitrary code, so container isolation provides the safety boundary rather than permission popups.
 
 ## pi-pods (GPU Pod Provisioning)
 
@@ -73,17 +95,36 @@ When teams need to run open-weight models (rather than API-hosted models), they 
 3. Deploy vLLM with the specified model
 4. Manage the instance lifecycle (start, stop, status, teardown)
 
-### Technical Details
+### Supported Providers
 
-| Aspect | Detail |
-|--------|--------|
-| **Package** | `@mariozechner/pi-pods` v0.66.1 |
-| **CLI command** | `pi-pods` |
-| **Dependencies** | `pi-agent-core` for agent integration, `chalk` for terminal output |
-| **Includes** | Model configurations, helper scripts, and provisioning templates |
-| **Keywords** | llm, vllm, gpu, pods, ai, cli |
+| Provider | Description |
+|----------|-------------|
+| DataCrunch | GPU cloud instances |
+| RunPod | Serverless and pod-based GPU compute |
+| Vast.ai | GPU marketplace |
+| Prime Intellect | AI compute platform |
+| AWS EC2 | Amazon GPU instances |
+| Custom | Any Ubuntu machine with NVIDIA GPUs |
 
-The package includes pre-built model configurations and helper scripts that are copied into the distribution during build, suggesting it bundles deployment recipes alongside the CLI tooling.
+### Pre-configured Models
+
+The package bundles model definitions for several open-weight model families:
+
+| Family | Tool-Call Parser |
+|--------|-----------------|
+| Qwen | Hermes parser |
+| GPT-OSS | Standard parser |
+| GLM | glm4_moe parser |
+
+### Deployment Flow
+
+1. Configure model requirements and GPU specifications
+2. Provision a GPU pod via the target provider's API
+3. SSH into the pod and deploy vLLM with the specified model
+4. Expose an **OpenAI-compatible API endpoint** for the deployed model
+5. Manage lifecycle (start, stop, status, teardown)
+
+Smart multi-GPU allocation supports distributing multiple models across available GPUs on a single machine.
 
 ## pi-web-ui (Web Components)
 

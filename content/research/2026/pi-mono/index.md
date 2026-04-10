@@ -5,7 +5,7 @@ date: 2026-04-10
 
 ## Overview
 
-Pi[^1] is an open-source monorepo of tools for building AI agents and managing LLM deployments, created by Mario Zechner. The primary offering is an interactive coding agent CLI called `pi` that connects to multiple AI providers (Anthropic, OpenAI, Google, Mistral, AWS Bedrock, and more) and autonomously executes multi-step coding tasks — reading files, running shell commands, applying edits, and managing sessions — all from the terminal. The project is written almost entirely in TypeScript (95.9%), runs on Node.js 20+, and is structured as an npm workspace monorepo with lockstep versioning across seven packages.
+Pi[^1] is an open-source monorepo of tools for building AI agents and managing LLM deployments, created by Mario Zechner (known for the libGDX game framework). The primary offering is an interactive coding agent CLI called `pi` that connects to multiple AI providers (Anthropic, OpenAI, Google, Mistral, AWS Bedrock, and more) and autonomously executes multi-step coding tasks — reading files, running shell commands, applying edits, and managing sessions — all from the terminal. The project is written almost entirely in TypeScript (95.9%), runs on Node.js 20+, uses `tsgo` (the experimental Go-based TypeScript native compiler v7.0) for fast builds, and is structured as an npm workspace monorepo with lockstep versioning across seven packages published under the `@mariozechner` npm scope.
 
 What makes pi architecturally distinctive is its **layered separation of concerns**: a provider-agnostic LLM streaming library (`pi-ai`) sits at the bottom, a generic agent runtime with tool execution and state management (`pi-agent-core`) builds on top, and the full-featured coding agent CLI (`pi-coding-agent`) sits at the highest layer with session persistence, context compaction, extensions, skills, and a custom differential-rendering TUI (`pi-tui`). Supporting packages add Slack bot integration (`pi-mom`), GPU pod provisioning for vLLM (`pi-pods`), and reusable Lit.js web components for chat interfaces (`pi-web-ui`).
 
@@ -19,6 +19,9 @@ What makes pi architecturally distinctive is its **layered separation of concern
 - The TUI library implements **differential rendering** — a 5-stage pipeline that renders components, composites overlays, extracts cursor positions, diffs against the previous frame, and writes only changed lines using synchronized output blocks to prevent flicker.
 - The **extension system** supports custom tools, slash commands, event hooks, and resource overrides loaded from user or project directories, while **skills** are markdown files with frontmatter that get injected into the system prompt.
 - Built-in tools follow a **file mutation queue** pattern where concurrent modifications to the same file are serialized, and the edit tool evaluates all replacements against the original file content (not incrementally) to prevent cascading errors.
+- The project takes a philosophy of **aggressive extensibility over built-in features** — MCP, sub-agents, plan mode, and permission popups are explicitly not built into the core, but are all achievable through the extension system, keeping the core small and composable.
+- LLM provider SDKs are **lazy-loaded** via dynamic `import()` at first use, so the package doesn't pull in all SDKs upfront — keeping startup fast and memory lean.
+- The Slack bot (`pi-mom`) is **self-managing** — it installs its own tools, writes its own automation scripts, and configures credentials autonomously, with security isolation via Docker containers.
 
 ## Architecture
 

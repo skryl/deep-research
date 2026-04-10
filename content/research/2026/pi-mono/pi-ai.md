@@ -24,6 +24,10 @@ const stream = provider.stream(model, context, options);
 
 Providers can be registered with an optional `sourceId` for lifecycle management — `unregisterApiProviders(sourceId)` removes all providers from a given source, enabling clean teardown of dynamically loaded extensions or test fixtures.
 
+### Lazy Loading
+
+Each provider module is **lazy-loaded** via dynamic `import()` at first use. The `register-builtins.ts` module sets up lightweight stubs that only pull in the actual provider SDK (Anthropic, OpenAI, Google, etc.) when that provider is first needed. This keeps startup fast and avoids loading heavyweight SDK dependencies that may never be used.
+
 ### Built-in Providers
 
 The `register-builtins.ts` module registers all 17 built-in providers on import:
@@ -148,6 +152,22 @@ Messages carry typed content blocks:
 | `ThinkingContent` | thinking, redacted? | Reasoning blocks (may be redacted by provider) |
 | `ImageContent` | base64, mediaType | Base64-encoded image data |
 | `ToolCall` | id, name, arguments | Function invocation with parsed arguments |
+
+### OAuth Support
+
+The package includes built-in OAuth flows for provider authentication:
+
+| Provider | OAuth Type |
+|----------|-----------|
+| GitHub Copilot | Device flow |
+| OpenAI Codex | Authorization code |
+| Anthropic Pro | Authorization code |
+| Google Gemini CLI | Authorization code |
+| Google Antigravity | Authorization code |
+
+### Tool Schema Validation
+
+Tool parameter schemas use **TypeBox** (`@sinclair/typebox`) rather than raw JSON Schema, with **ajv** for runtime validation. TypeBox provides compile-time TypeScript type inference from schema definitions, ensuring tool argument types are checked both statically and at runtime.
 
 ### Usage Tracking
 
