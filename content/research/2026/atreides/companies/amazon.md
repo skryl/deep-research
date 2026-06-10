@@ -13,7 +13,7 @@ weight: 24
 
 ## Business Overview
 
-Amazon runs three reporting segments: North America and International retail (first-party commerce, third-party marketplace services, advertising, Prime subscriptions) and AWS. FY2025 revenue was ~$638B, up ~11% from $575B in 2024, with AWS contributing ~$108B (+19%) and roughly $45.6B of segment operating income — an AWS operating margin in the low-40s and the large majority of total company operating profit. Advertising remains the fastest-compounding high-margin line inside retail.
+Amazon runs three reporting segments: North America and International retail (first-party commerce, third-party marketplace services, advertising, Prime subscriptions) and AWS. FY2024 revenue was $638B, up 11% from $575B in 2023, with AWS contributing $107.6B (+19%). FY2025 continued the trend: AWS exited the year growing 24% and its annual segment operating income reached ~$45.6B — an operating margin around the low-40s and the large majority of total company operating profit — while management laid out a ~$200B capex plan for 2026. Advertising remains the fastest-compounding high-margin line inside retail.
 
 The Q1 2026 print is what the bulls had been waiting for: revenue of $181.5B (+17%) and AWS growth accelerating to 28% year over year — the fastest in 15 quarters — on a ~$150B annualized run rate. The cost is enormous: Q1 capex hit $44.2B, free cash flow collapsed ~95% to ~$1.2B, and reported net income was inflated by a $16.8B unrealized gain on Amazon's Anthropic stake. Management guided to significant further investment through 2026.
 
@@ -24,11 +24,9 @@ The strategic story inside AWS is custom silicon. Per the Q1 2026 call, Trainium
 | Period | Revenue | YoY | Notes |
 |---|---:|---:|---|
 | FY2023 | $574.8B | +12% | — |
-| FY2024 | $638.0B | +11% | AWS $107.6B (+19%), AWS op. income ~$39.8B |
-| FY2025 | ~$638B → see note | — | AWS ~$108B; per Q4 FY25 coverage, AWS +24% exit rate; ~$200B FY26 capex plan |
+| FY2024 | $638.0B | +11% | AWS $107.6B (+19%) |
+| FY2025 | n/a (not sourced) | — | AWS op. income ~$45.6B; AWS exit growth +24%; ~$200B FY26 capex plan |
 | Q1 2026 | $181.5B | +17% | AWS +28% (~$150B run rate); capex $44.2B; FCF ~$1.2B (−95%) |
-
-*Note: sources for FY2024/FY2025 segment splits partially overlap ($575B→$638B is the 2024→2025 step in one source); treat full-year 2025 line as approximate.*
 
 ## Why Atreides Owns It
 
