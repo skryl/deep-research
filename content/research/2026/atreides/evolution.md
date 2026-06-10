@@ -50,7 +50,7 @@ Reading: out of big-cap safety (MSFT) and "AI-pressured" software (GitLab — Ba
 - **Astera Labs is the conviction name with a trader's hands.** Held since at least Q4 2024, but the share count went 1.8 M → 4.7 M → 0.95 M → 62 k → 1.6 M → 3.4 M. The thesis (AI connectivity) never left; the sizing traded around it violently.
 - **The QQQ put is structural, not tactical.** Present in 5 of the last 6 quarters; Baker runs a concentrated innovation long book and shorts the index against it rather than de-grossing the longs.
 - **Options express timing views.** NVDA calls appeared exactly twice — Q1 2025 (pre-Blackwell ramp) and Q4 2025 (Meta partnership) — and were gone the following quarter both times.
-- **He buys his own IPO cohort.** CoreWeave, Chime, Ambiq, Gemini, Voyager, Nebius, EquipmentShare, BitGo all show up at or shortly after listing — several (Chime, Ambiq, EquipmentShare per Form D timing) were Atreides private-side names first; see [Private Book](research/2026/atreides/private-book).
+- **He buys the IPO cohort.** CoreWeave, Chime, Ambiq, Gemini, Voyager, Nebius, EquipmentShare, BitGo all show up at or shortly after listing — consistent with the crossover model, though only Astera Labs is *confirmed* as a pre-IPO Atreides position; see [Private Book](research/2026/atreides/private-book).
 - **Software is treated as AI-vulnerable.** GitLab, Atlassian, ServiceTitan, Intuit, HubSpot, Five9, Varonis cycled in and out within 2–3 quarters — consistent with Baker's public line that SaaS faces a "life or death decision" on AI agents.[^5]
 
 ## Footnotes
